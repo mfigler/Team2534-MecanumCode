@@ -53,8 +53,6 @@ public class Robot extends IterativeRobot {
   PIDController strafeLoop = new PIDController(0.1, 0.0, 0.0, limelightX, strafeOutput);
   public double CameraValue = 0;
   public double StrafeValue = 0;
-  public double outputX = 0;
-  public double outputSkew = 0;
   double actualSkew;
   
 
@@ -123,10 +121,11 @@ public class Robot extends IterativeRobot {
       JoyZ = 0;
     }
     if (JoyA){
-      //visionLoop.enable();
+      visionLoop.enable();
       strafeLoop.enable();
+      m_robotDrive.driveCartesian(strafeOutput.outputX, JoyY, output.outputSkew, 0.0);
     } else {
-      //visionLoop.disable();
+      visionLoop.disable();
       strafeLoop.disable();
       m_robotDrive.driveCartesian(JoyX, JoyY, JoyZ, 0.0);
     }

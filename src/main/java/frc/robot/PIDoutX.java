@@ -18,12 +18,14 @@ import edu.wpi.first.wpilibj.PIDOutput;
 
 public class PIDoutX implements PIDOutput{
     Robot robot;
+    public double outputX;
 
     public PIDoutX(Robot r){
         robot = r;
     }
     public void pidWrite(double output){
-    robot.m_robotDrive.driveCartesian(output, robot.JoyY, robot.JoyZ, 0.0);  
+    outputX = output; 
+    //robot.m_robotDrive.driveCartesian(output, robot.JoyY, robot.JoyZ, 0.0);  
       
     }
 }
