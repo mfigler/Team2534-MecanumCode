@@ -46,9 +46,16 @@ public class Robot extends IterativeRobot {
   double CorrectSpeed = 0.2;
   XboxController controller = new XboxController(0);
   PIDout output = new PIDout(this); //instantiate output of PIDout
-  CameraSource limelight = new CameraSource(this);  
+  PIDoutX strafeOutput = new PIDoutX(this);
+  CameraSource limelight = new CameraSource(this); 
+  CameraSourceX limelightX = new CameraSourceX(this);
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, output);
+  PIDController strafeLoop = new PIDController(0.1, 0.0, 0.0, limelightX, strafeOutput);
   public double CameraValue = 0;
+  public double StrafeValue = 0;
+  public double outputX = 0;
+  public double outputSkew = 0;
+  double actualSkew;
   
 
   @Override
@@ -57,6 +64,9 @@ public class Robot extends IterativeRobot {
     rearLeft.setInverted(false);
     frontRight.setInverted(true);
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
+    strafeLoop.setSetpoint(0.0);
+    strafeLoop.setOutputRange(-1,1);
+    strafeLoop.setInputRange(-25.0, 25.0);
     visionLoop.setSetpoint(0.0);
     visionLoop.setOutputRange(-1,1);
     visionLoop.setInputRange(-25.0, 25.0);
@@ -76,17 +86,27 @@ public class Robot extends IterativeRobot {
     NetworkTableEntry tx = table.getEntry("tx");
     NetworkTableEntry ty = table.getEntry("ty");
     NetworkTableEntry ta = table.getEntry("ta");
+    NetworkTableEntry ts = table.getEntry("ts");
 
     //read values periodically
     double x = tx.getDouble(0.0);
     double y = ty.getDouble(0.0);
     double area = ta.getDouble(0.0);
+    double skew = ts.getDouble(0.0);
     CameraValue = x;
+    if (skew > -45){
+      actualSkew = Math.abs(skew);
+    }else {
+      actualSkew = Math.abs(skew) - 90;
+    }
+    StrafeValue = actualSkew;
+   
 
     //post to smart dashboard periodically
     SmartDashboard.putNumber("LimelightX", x);
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
+    SmartDashboard.putNumber("LimelightSkew", actualSkew);
 
     JoyA = controller.getRawButton(1);
     
@@ -103,9 +123,11 @@ public class Robot extends IterativeRobot {
       JoyZ = 0;
     }
     if (JoyA){
-      visionLoop.enable();
+      //visionLoop.enable();
+      strafeLoop.enable();
     } else {
-      visionLoop.disable();
+      //visionLoop.disable();
+      strafeLoop.disable();
       m_robotDrive.driveCartesian(JoyX, JoyY, JoyZ, 0.0);
     }
 

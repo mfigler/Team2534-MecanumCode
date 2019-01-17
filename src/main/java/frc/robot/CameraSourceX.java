@@ -12,20 +12,23 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.PIDSourceType;
-import edu.wpi.first.wpilibj.PIDOutput;
 
-
-
-public class PIDout implements PIDOutput{
+public class CameraSourceX implements PIDSource {
     Robot robot;
 
-    public PIDout(Robot r){
+    public CameraSourceX(Robot r){
         robot = r;
     }
-    public void pidWrite(double output){
-    double outputSkew = output;
-    //robot.m_robotDrive.driveCartesian(robot.JoyX, robot.JoyY,output, 0.0);  
-      
+
+    public PIDSourceType getPIDSourceType(){
+        return PIDSourceType.kDisplacement;
+    }
+
+    public void setPIDSourceType(PIDSourceType pidSource) {
+
+    }
+
+    public double pidGet(){
+        return robot.StrafeValue;
     }
 }
-

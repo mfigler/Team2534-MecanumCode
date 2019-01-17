@@ -16,16 +16,14 @@ import edu.wpi.first.wpilibj.PIDOutput;
 
 
 
-public class PIDout implements PIDOutput{
+public class PIDoutX implements PIDOutput{
     Robot robot;
 
-    public PIDout(Robot r){
+    public PIDoutX(Robot r){
         robot = r;
     }
     public void pidWrite(double output){
-    double outputSkew = output;
-    //robot.m_robotDrive.driveCartesian(robot.JoyX, robot.JoyY,output, 0.0);  
+    robot.m_robotDrive.driveCartesian(output, robot.JoyY, robot.JoyZ, 0.0);  
       
     }
 }
-
