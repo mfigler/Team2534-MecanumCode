@@ -18,6 +18,10 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.PIDController;
+import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.I2C.Port; 
+import edu.wpi.first.wpilibj.command.Subsystem;
+
 
 
 /**
@@ -29,7 +33,6 @@ public class Robot extends IterativeRobot {
   private static final int kRearLeftChannel = 4;
   private static final int kFrontRightChannel = 1;
   private static final int kRearRightChannel = 2;
-
   private static final int kJoystickChannel = 0;
 
   MecanumDrive m_robotDrive;
@@ -37,7 +40,7 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX rearLeft = new WPI_TalonSRX(kRearLeftChannel);
   WPI_TalonSRX frontRight = new WPI_TalonSRX(kFrontRightChannel);
   WPI_TalonSRX rearRight = new WPI_TalonSRX(kRearRightChannel);
-  int deadzone = 20;
+  int deadzone = 80;
   double JoyY = 0;
   double JoyX = 0;
   double JoyZ = 0;
@@ -45,16 +48,28 @@ public class Robot extends IterativeRobot {
   double Target = 0.5;
   double CorrectSpeed = 0.2;
   XboxController controller = new XboxController(0);
-  PIDout output = new PIDout(this); //instantiate output of PIDout
+ 
+  //instantiate output of PIDout
+  PIDout output = new PIDout(this); 
   PIDoutX strafeOutput = new PIDoutX(this);
+  PIDoutY forwardOutput = new PIDoutY(this);
+  
+  //Ints. Class 
   CameraSource limelight = new CameraSource(this); 
   CameraSourceX limelightX = new CameraSourceX(this);
+  CameraSourceY limelightY = new CameraSourceY(this);
+
+  //Set PIDs
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, output);
-  PIDController strafeLoop = new PIDController(0.1, 0.0, 0.0, limelightX, strafeOutput);
+  PIDController strafeLoop = new PIDController(0.12, 0.0, 0.0, limelightX, strafeOutput);
+  PIDController forwardLoop = new PIDController(0.04, 0.0, 0.0, limelightY, forwardOutput);
+  
+  //Global Varable for CameraValues
   public double CameraValue = 0;
   public double StrafeValue = 0;
+  public double ForwardValue = 0;
   double actualSkew;
-  
+
 
   @Override
   public void robotInit() {
@@ -62,18 +77,19 @@ public class Robot extends IterativeRobot {
     rearLeft.setInverted(false);
     frontRight.setInverted(true);
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
+    
+    //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
     strafeLoop.setOutputRange(-1,1);
     strafeLoop.setInputRange(-25.0, 25.0);
+    
     visionLoop.setSetpoint(0.0);
     visionLoop.setOutputRange(-1,1);
     visionLoop.setInputRange(-25.0, 25.0);
-  
-
-
-    // Invert the left side motors.
-    // You may need to change or remove this to match your robot.
-   
+    
+    forwardLoop.setSetpoint(9.2);
+    forwardLoop.setOutputRange(-0.5,0.5);
+    forwardLoop.setInputRange(-25.0, 25.0); 
   }
 
   @Override
@@ -92,6 +108,8 @@ public class Robot extends IterativeRobot {
     double area = ta.getDouble(0.0);
     double skew = ts.getDouble(0.0);
     CameraValue = x;
+    ForwardValue = area;
+    
     if (skew > -45){
       actualSkew = Math.abs(skew);
     }else {
@@ -107,10 +125,16 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
 
     JoyA = controller.getRawButton(1);
-    
     JoyY = controller.getRawAxis(1);
     JoyX = controller.getRawAxis(0);
     JoyZ = controller.getRawAxis(4);
+
+    //Read Values on Smartdashboard
+    SmartDashboard.putNumber("JoyX", JoyX);
+    SmartDashboard.putNumber("JoyY", JoyY);
+    SmartDashboard.putNumber("JoyZ", JoyZ);
+    
+    //Deadzone
     if (Math.abs(JoyY) < (deadzone/100)) {
       JoyY = 0;
     }
@@ -120,14 +144,19 @@ public class Robot extends IterativeRobot {
     if (Math.abs(JoyZ) < (deadzone/100)) {
       JoyZ = 0;
     }
+
+
+    //Controlling PID Loops 
     if (JoyA){
       visionLoop.enable();
       strafeLoop.enable();
-      m_robotDrive.driveCartesian(strafeOutput.outputX, JoyY, output.outputSkew, 0.0);
+      forwardLoop.enable();
+      m_robotDrive.driveCartesian(strafeOutput.outputX, forwardOutput.outputY, output.outputSkew, 0.0);
     } else {
       visionLoop.disable();
       strafeLoop.disable();
-      m_robotDrive.driveCartesian(JoyX, JoyY, JoyZ, 0.0);
+      forwardLoop.disable();
+      m_robotDrive.driveCartesian(JoyX, -JoyY, -JoyZ, 0.0);
     }
 
   }
