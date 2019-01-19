@@ -22,6 +22,11 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port; 
 import edu.wpi.first.wpilibj.command.Subsystem;
 
+import edu.wpi.cscore.*;
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.UsbCamera;
+
 
 
 /**
@@ -40,7 +45,7 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX rearLeft = new WPI_TalonSRX(kRearLeftChannel);
   WPI_TalonSRX frontRight = new WPI_TalonSRX(kFrontRightChannel);
   WPI_TalonSRX rearRight = new WPI_TalonSRX(kRearRightChannel);
-  int deadzone = 80;
+  double deadzone = 0.15;
   double JoyY = 0;
   double JoyX = 0;
   double JoyZ = 0;
@@ -48,6 +53,9 @@ public class Robot extends IterativeRobot {
   double Target = 0.5;
   double CorrectSpeed = 0.2;
   XboxController controller = new XboxController(0);
+  int frames = 30;
+  double currentData;
+
  
   //instantiate output of PIDout
   PIDout output = new PIDout(this); 
@@ -87,10 +95,36 @@ public class Robot extends IterativeRobot {
     visionLoop.setOutputRange(-1,1);
     visionLoop.setInputRange(-25.0, 25.0);
     
-    forwardLoop.setSetpoint(9.2);
+    forwardLoop.setSetpoint(8.0);
     forwardLoop.setOutputRange(-0.5,0.5);
     forwardLoop.setInputRange(-25.0, 25.0); 
-  }
+
+    /*new Thread(() -> {
+        
+      UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+      
+      camera.setVideoMode(VideoMode.PixelFormat.kMJPEG, 360, 320, frames);
+
+      CvSink cvSink = CameraServer.getInstance().getVideo();
+      CvSource outputStream = CameraServer.getInstance().putVideo("Blur", 480, 320);
+
+      Mat source = new Mat();
+      Mat output = new Mat();
+      
+      while(!Thread.interrupted()) {
+          cvSink.grabFrame(source);
+          currentData = camera.getActualDataRate();
+          if (currentData > 3.5 && frames > 8){
+            frames = frames - 2;
+            camera.setVideoMode(VideoMode.PixelFormat.kMJPEG, 360, 320, frames);
+          }else if (currentData < 1.5 && frames < 30){
+            frames = frames + 2;
+            camera.setVideoMode(VideoMode.PixelFormat.kMJPEG, 360, 320, frames);
+          }
+          Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+          outputStream.putFrame(output);
+      }).start();*/
+    }
 
   @Override
   public void teleopPeriodic() {
@@ -135,13 +169,13 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("JoyZ", JoyZ);
     
     //Deadzone
-    if (Math.abs(JoyY) < (deadzone/100)) {
+    if (Math.abs(JoyY) < (deadzone)) {
       JoyY = 0;
     }
-    if (Math.abs(JoyX) < (deadzone/100)) {
+    if (Math.abs(JoyX) < (deadzone)) {
       JoyX = 0;
     }
-    if (Math.abs(JoyZ) < (deadzone/100)) {
+    if (Math.abs(JoyZ) < (deadzone)) {
       JoyZ = 0;
     }
 
