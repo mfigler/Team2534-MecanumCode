@@ -94,7 +94,7 @@ public class Robot extends IterativeRobot {
     
     //Setup Encoders
     testCoder = new Encoder(kEncoderCannelA, kEncoderCannelB);
-    testcider.setDistancePerPulse((Math.PI * 8) / );
+    testcider.setDistancePerPulse((Math.PI * 8) / 360);
     
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
