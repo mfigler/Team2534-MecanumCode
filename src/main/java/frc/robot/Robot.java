@@ -41,15 +41,15 @@ public class Robot extends IterativeRobot {
   private static final int kFrontRightChannel = 1;
   private static final int kRearRightChannel = 2;
   private static final int kJoystickChannel = 0;
-  private static final int kEncoderCannelA = 0;
-  private static final int kEncoderCannelB = 1;
+  private static final int kEncoderChannelA = 0;
+  private static final int kEncoderChannelB = 1;
 
   MecanumDrive m_robotDrive;
   WPI_TalonSRX frontLeft = new WPI_TalonSRX(kFrontLeftChannel);
   WPI_TalonSRX rearLeft = new WPI_TalonSRX(kRearLeftChannel);
   WPI_TalonSRX frontRight = new WPI_TalonSRX(kFrontRightChannel);
   WPI_TalonSRX rearRight = new WPI_TalonSRX(kRearRightChannel);
-  private Encoder testCoder;
+  Encoder testCoder;
   double deadzone = 0.15;
   double JoyY = 0;
   double JoyX = 0;
@@ -93,8 +93,8 @@ public class Robot extends IterativeRobot {
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     
     //Setup Encoders
-    testCoder = new Encoder(kEncoderCannelA, kEncoderCannelB);
-    testcider.setDistancePerPulse((Math.PI * 8) / 360);
+    testCoder = new Encoder(kEncoderChannelA, kEncoderChannelB);
+    testCoder.setDistancePerPulse((Math.PI * 8) / 360);
     
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
@@ -142,9 +142,7 @@ public class Robot extends IterativeRobot {
     if (controller.getRawButton(2)){
       testCoder.reset();
     }
-    SmartDashboard.putNumber("Encoder Value:" testCoder.getDistance());
-    SmartDashboard.putNumber("Encoder Direction:" testCoder.getDirection());
-     
+    SmartDashboard.putNumber("Encoder Value:" , testCoder.getDistance());    
     
     
     
