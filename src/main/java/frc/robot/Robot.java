@@ -4,10 +4,7 @@
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
-//Lucas was here
-//hello
-//testin stuff
-//test 2
+
 package frc.robot;
 
 
