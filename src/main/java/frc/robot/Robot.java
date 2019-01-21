@@ -21,17 +21,13 @@ import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
 
 public class Robot extends IterativeRobot {
-  private static final int kFrontLeftChannel = 3;
-  private static final int kRearLeftChannel = 4;
-  private static final int kFrontRightChannel = 1;
-  private static final int kRearRightChannel = 2;
-  private static final int kJoystickChannel = 0;
 
   MecanumDrive m_robotDrive;
-  WPI_TalonSRX frontLeft = new WPI_TalonSRX(kFrontLeftChannel);
-  WPI_TalonSRX rearLeft = new WPI_TalonSRX(kRearLeftChannel);
-  WPI_TalonSRX frontRight = new WPI_TalonSRX(kFrontRightChannel);
-  WPI_TalonSRX rearRight = new WPI_TalonSRX(kRearRightChannel);
+  WPI_TalonSRX frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
+  WPI_TalonSRX rearLeft = new WPI_TalonSRX(RobotMap.talonRearLeftChannel);
+  WPI_TalonSRX frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
+  WPI_TalonSRX rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
+  Encoder testCoder;
   double deadzone = 0.15;
   double JoyY = 0;
   double JoyX = 0;
@@ -40,7 +36,7 @@ public class Robot extends IterativeRobot {
   boolean JoyB;
   double Target = 0.5;
   double CorrectSpeed = 0.2;
-  XboxController controller = new XboxController(0);
+  XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
   int frames = 30;
   double currentData;
   int num = 1;
@@ -72,10 +68,15 @@ public class Robot extends IterativeRobot {
 
   @Override
   public void robotInit() {
+    //Setup Drive Train
     frontLeft.setInverted(true);
     rearLeft.setInverted(false);
     frontRight.setInverted(true);
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
+    
+    //Setup Encoders
+    testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel);
+    testCoder.setDistancePerPulse((Math.PI * 8) / 360); 
     
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
@@ -119,6 +120,14 @@ public class Robot extends IterativeRobot {
 
   @Override
   public void teleopPeriodic() {
+    //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
+    if (controller.getRawButton(2)){
+      testCoder.reset();
+    }
+    SmartDashboard.putNumber("Encoder Value:" , testCoder.getDistance());    
+    
+    
+    
     // Use the joystick X axis for lateral movement, Y axis for forward
     // movement, and Z axis for rotation.
     NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -147,12 +156,13 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
+    
 
-    JoyA = controller.getRawButton(1);
+    JoyA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
     JoyB = controller.getRawButton(2);
-    JoyY = controller.getRawAxis(1);
-    JoyX = controller.getRawAxis(0);
-    JoyZ = controller.getRawAxis(4);
+    JoyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
+    JoyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
+    JoyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
 
     //Read Values on Smartdashboard
     SmartDashboard.putNumber("JoyX", JoyX);
