@@ -1,11 +1,4 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
-//Lucas was here
-//hello
+
 package frc.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -22,18 +15,11 @@ import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port; 
 import edu.wpi.first.wpilibj.command.Subsystem;
-
 import edu.wpi.cscore.*;
 import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
 
-
-
-/**
- * This is a demo program showing how to use Mecanum control with the RobotDrive
- * class.
- */
 public class Robot extends IterativeRobot {
   private static final int kFrontLeftChannel = 3;
   private static final int kRearLeftChannel = 4;
@@ -51,11 +37,13 @@ public class Robot extends IterativeRobot {
   double JoyX = 0;
   double JoyZ = 0;
   boolean JoyA;
+  boolean JoyB;
   double Target = 0.5;
   double CorrectSpeed = 0.2;
   XboxController controller = new XboxController(0);
   int frames = 30;
   double currentData;
+  int num = 1;
 
  
   //instantiate output of PIDout
@@ -78,6 +66,8 @@ public class Robot extends IterativeRobot {
   public double StrafeValue = 0;
   public double ForwardValue = 0;
   double actualSkew;
+
+  LED Leds = new LED();
 
 
   @Override
@@ -151,7 +141,6 @@ public class Robot extends IterativeRobot {
       actualSkew = Math.abs(skew) - 90;
     }
     StrafeValue = actualSkew;
-   
 
     //post to smart dashboard periodically
     SmartDashboard.putNumber("LimelightX", x);
@@ -160,6 +149,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
 
     JoyA = controller.getRawButton(1);
+    JoyB = controller.getRawButton(2);
     JoyY = controller.getRawAxis(1);
     JoyX = controller.getRawAxis(0);
     JoyZ = controller.getRawAxis(4);
@@ -168,6 +158,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("JoyX", JoyX);
     SmartDashboard.putNumber("JoyY", JoyY);
     SmartDashboard.putNumber("JoyZ", JoyZ);
+    SmartDashboard.putNumber("timer", num);
     
     //Deadzone
     if (Math.abs(JoyY) < (deadzone)) {
@@ -193,6 +184,11 @@ public class Robot extends IterativeRobot {
       forwardLoop.disable();
       m_robotDrive.driveCartesian(JoyX, -JoyY, -JoyZ, 0.0);
     }
-
+    if (JoyB){
+      Leds.sendCode(2);
+    } else{
+      Leds.sendCode(1);
+      
+    }
   }
 }
