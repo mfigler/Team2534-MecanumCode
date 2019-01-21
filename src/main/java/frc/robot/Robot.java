@@ -40,7 +40,7 @@ public class Robot extends IterativeRobot {
   XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
   int frames = 30;
   double currentData;
-  int num = 1;
+  int ledCode = 1;
 
  
   //instantiate output of PIDout
@@ -160,7 +160,7 @@ public class Robot extends IterativeRobot {
     
 
     JoyA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
-    JoyB = controller.getRawButton(2);
+    JoyB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
     JoyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     JoyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
     JoyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
@@ -169,7 +169,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("JoyX", JoyX);
     SmartDashboard.putNumber("JoyY", JoyY);
     SmartDashboard.putNumber("JoyZ", JoyZ);
-    SmartDashboard.putNumber("timer", num);
+    SmartDashboard.putNumber("timer", ledCode);
     
     //Deadzone
     if (Math.abs(JoyY) < (deadzone)) {
