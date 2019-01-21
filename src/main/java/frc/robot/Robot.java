@@ -10,7 +10,6 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.XboxController;
 import com.ctre.phoenix.motorcontrol.can.*;
@@ -41,7 +40,6 @@ public class Robot extends IterativeRobot {
   private static final int kRearLeftChannel = 4;
   private static final int kFrontRightChannel = 1;
   private static final int kRearRightChannel = 2;
-  private static final int kJoystickChannel = 0;
   private static final int kEncoderChannelA = 0;
   private static final int kEncoderChannelB = 1;
 
