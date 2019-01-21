@@ -4,8 +4,6 @@
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
-//Lucas was here
-//hello
 package frc.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -31,24 +29,14 @@ import edu.wpi.cscore.UsbCamera;
 
 
 
-/**
- * This is a demo program showing how to use Mecanum control with the RobotDrive
- * class.
- */
+
 public class Robot extends IterativeRobot {
-  private static final int kFrontLeftChannel = 3;
-  private static final int kRearLeftChannel = 4;
-  private static final int kFrontRightChannel = 1;
-  private static final int kRearRightChannel = 2;
-  private static final int kJoystickChannel = 0;
-  private static final int kEncoderChannelA = 0;
-  private static final int kEncoderChannelB = 1;
 
   MecanumDrive m_robotDrive;
-  WPI_TalonSRX frontLeft = new WPI_TalonSRX(kFrontLeftChannel);
-  WPI_TalonSRX rearLeft = new WPI_TalonSRX(kRearLeftChannel);
-  WPI_TalonSRX frontRight = new WPI_TalonSRX(kFrontRightChannel);
-  WPI_TalonSRX rearRight = new WPI_TalonSRX(kRearRightChannel);
+  WPI_TalonSRX frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
+  WPI_TalonSRX rearLeft = new WPI_TalonSRX(RobotMap.talonRearLeftChannel);
+  WPI_TalonSRX frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
+  WPI_TalonSRX rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
   Encoder testCoder;
   double deadzone = 0.15;
   double JoyY = 0;
@@ -57,7 +45,7 @@ public class Robot extends IterativeRobot {
   boolean JoyA;
   double Target = 0.5;
   double CorrectSpeed = 0.2;
-  XboxController controller = new XboxController(0);
+  XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
   int frames = 30;
   double currentData;
 
@@ -93,8 +81,8 @@ public class Robot extends IterativeRobot {
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     
     //Setup Encoders
-    testCoder = new Encoder(kEncoderChannelA, kEncoderChannelB);
-    testCoder.setDistancePerPulse((Math.PI * 8) / 360);
+    testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel);
+    testCoder.setDistancePerPulse((Math.PI * 8) / 360); 
     
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
@@ -177,10 +165,10 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
     
 
-    JoyA = controller.getRawButton(1);
-    JoyY = controller.getRawAxis(1);
-    JoyX = controller.getRawAxis(0);
-    JoyZ = controller.getRawAxis(4);
+    JoyA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
+    JoyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
+    JoyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
+    JoyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
 
     //Read Values on Smartdashboard
     SmartDashboard.putNumber("JoyX", JoyX);
