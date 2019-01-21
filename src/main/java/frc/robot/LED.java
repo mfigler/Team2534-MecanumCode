@@ -6,11 +6,11 @@ public class LED
 {
     private I2C arduinoBus;
     
-    public LED(I2C.Port port, int deviceAddress){
-        this.arduinoBus = new I2C(I2C.Port.kOnboard, 2);
+    public LED(){
+        this.arduinoBus = new I2C(I2C.Port.kOnboard, 8);
     }
     
-    public boolean sendCode(char LEDCode){
+    public boolean sendCode(int LEDCode){
         this.arduinoBus.write(0, LEDCode);
         return true;
     }
