@@ -6,6 +6,7 @@
 /*----------------------------------------------------------------------------*/
 //Lucas was here
 //hello
+//testin stuff
 package frc.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -22,6 +23,8 @@ import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port; 
 import edu.wpi.first.wpilibj.command.Subsystem;
+import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.Encoder;
 
 import edu.wpi.cscore.*;
 import edu.wpi.cscore.CvSink;
@@ -40,12 +43,15 @@ public class Robot extends IterativeRobot {
   private static final int kFrontRightChannel = 1;
   private static final int kRearRightChannel = 2;
   private static final int kJoystickChannel = 0;
+  private static final int kEncoderChannelA = 0;
+  private static final int kEncoderChannelB = 1;
 
   MecanumDrive m_robotDrive;
   WPI_TalonSRX frontLeft = new WPI_TalonSRX(kFrontLeftChannel);
   WPI_TalonSRX rearLeft = new WPI_TalonSRX(kRearLeftChannel);
   WPI_TalonSRX frontRight = new WPI_TalonSRX(kFrontRightChannel);
   WPI_TalonSRX rearRight = new WPI_TalonSRX(kRearRightChannel);
+  Encoder testCoder;
   double deadzone = 0.15;
   double JoyY = 0;
   double JoyX = 0;
@@ -82,10 +88,15 @@ public class Robot extends IterativeRobot {
 
   @Override
   public void robotInit() {
+    //Setup Drive Train
     frontLeft.setInverted(true);
     rearLeft.setInverted(false);
     frontRight.setInverted(true);
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
+    
+    //Setup Encoders
+    testCoder = new Encoder(kEncoderChannelA, kEncoderChannelB);
+    testCoder.setDistancePerPulse((Math.PI * 8) / 360);
     
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
@@ -129,6 +140,14 @@ public class Robot extends IterativeRobot {
 
   @Override
   public void teleopPeriodic() {
+    //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
+    if (controller.getRawButton(2)){
+      testCoder.reset();
+    }
+    SmartDashboard.putNumber("Encoder Value:" , testCoder.getDistance());    
+    
+    
+    
     // Use the joystick X axis for lateral movement, Y axis for forward
     // movement, and Z axis for rotation.
     NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -158,6 +177,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
+    
 
     JoyA = controller.getRawButton(1);
     JoyY = controller.getRawAxis(1);
