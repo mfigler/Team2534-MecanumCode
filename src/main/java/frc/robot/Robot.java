@@ -137,8 +137,13 @@ public class Robot extends IterativeRobot {
   @Override
   public void teleopPeriodic() {
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
-    SmartDashboard.putNumber("Rotations", (-rearRight.getSelectedSensorPosition(0))/4000);
-    SmartDashboard.putNumber("Encoder Value", -rearRight.getSelectedSensorPosition(0));
+    double encoderValue = -rearRight.getSelectedSensorPosition(0);
+    double rotations = encoderValue/4000;
+    double circumfrence = Math.PI*8;
+    double distance = circumfrence * rotations;
+    SmartDashboard.putNumber("Rotations", rotations);
+    SmartDashboard.putNumber("Encoder Value", encoderValue);
+    SmartDashboard.putNumber("Distance", distance);
     if (joyButtonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
