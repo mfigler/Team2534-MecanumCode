@@ -21,7 +21,8 @@ import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port; 
 import edu.wpi.first.wpilibj.command.Subsystem;
-import edu.wpi.first.wpilibj.Encoder;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 
 import edu.wpi.cscore.*;
 import edu.wpi.cscore.CvSink;
@@ -47,7 +48,9 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX rearLeft = new WPI_TalonSRX(kRearLeftChannel);
   WPI_TalonSRX frontRight = new WPI_TalonSRX(kFrontRightChannel);
   WPI_TalonSRX rearRight = new WPI_TalonSRX(kRearRightChannel);
-  Encoder testCoder;
+
+	
+ 
   double deadzone = 0.15;
   double JoyY = 0;
   double JoyX = 0;
@@ -89,10 +92,10 @@ public class Robot extends IterativeRobot {
     rearLeft.setInverted(false);
     frontRight.setInverted(true);
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
+    frontLeft.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
     
     //Setup Encoders
-    testCoder = new Encoder(kEncoderChannelA, kEncoderChannelB);
-    testCoder.setDistancePerPulse((Math.PI * 8) / 360);
+    
     
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
@@ -137,10 +140,7 @@ public class Robot extends IterativeRobot {
   @Override
   public void teleopPeriodic() {
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
-    if (controller.getRawButton(2)){
-      testCoder.reset();
-    }
-    SmartDashboard.putNumber("Encoder Value:" , testCoder.getDistance());    
+    SmartDashboard.putNumber("Encoder Value", frontLeft.getSelectedSensorVelocity(0));
     
     
     
