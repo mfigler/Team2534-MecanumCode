@@ -36,18 +36,14 @@ import edu.wpi.cscore.UsbCamera;
  * class.
  */
 public class Robot extends IterativeRobot {
-  private static final int kFrontLeftChannel = 3;
-  private static final int kRearLeftChannel = 4;
-  private static final int kFrontRightChannel = 1;
-  private static final int kRearRightChannel = 2;
-  private static final int kEncoderChannelA = 0;
-  private static final int kEncoderChannelB = 1;
+ 
+
 
   MecanumDrive m_robotDrive;
-  WPI_TalonSRX frontLeft = new WPI_TalonSRX(kFrontLeftChannel);
-  WPI_TalonSRX rearLeft = new WPI_TalonSRX(kRearLeftChannel);
-  WPI_TalonSRX frontRight = new WPI_TalonSRX(kFrontRightChannel);
-  WPI_TalonSRX rearRight = new WPI_TalonSRX(kRearRightChannel);
+  WPI_TalonSRX frontLeft = new WPI_TalonSRX(RobotMap.frontLeftChannel);
+  WPI_TalonSRX rearLeft = new WPI_TalonSRX(RobotMap.rearLeftChannel);
+  WPI_TalonSRX frontRight = new WPI_TalonSRX(RobotMap.frontRightChannel);
+  WPI_TalonSRX rearRight = new WPI_TalonSRX(RobotMap.rearRightChannel);
 
 	
  
@@ -55,7 +51,8 @@ public class Robot extends IterativeRobot {
   double JoyY = 0;
   double JoyX = 0;
   double JoyZ = 0;
-  boolean JoyA;
+  boolean JoyA = false;
+  boolean joyButtonX = false;
   double Target = 0.5;
   double CorrectSpeed = 0.2;
   XboxController controller = new XboxController(0);
@@ -92,7 +89,7 @@ public class Robot extends IterativeRobot {
     rearLeft.setInverted(false);
     frontRight.setInverted(true);
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
-    frontLeft.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
+    rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
     
     //Setup Encoders
     
@@ -140,8 +137,11 @@ public class Robot extends IterativeRobot {
   @Override
   public void teleopPeriodic() {
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
-    SmartDashboard.putNumber("Encoder Value", frontLeft.getSelectedSensorVelocity(0));
-    
+    SmartDashboard.putNumber("Rotations", (-rearRight.getSelectedSensorPosition(0))/4000);
+    SmartDashboard.putNumber("Encoder Value", -rearRight.getSelectedSensorPosition(0));
+    if (joyButtonX) {
+        rearRight.setSelectedSensorPosition(0, 0, 0);
+    }
     
     
     // Use the joystick X axis for lateral movement, Y axis for forward
@@ -179,6 +179,8 @@ public class Robot extends IterativeRobot {
     JoyY = controller.getRawAxis(1);
     JoyX = controller.getRawAxis(0);
     JoyZ = controller.getRawAxis(4);
+    joyButtonX = controller.getRawButton(3);
+
 
     //Read Values on Smartdashboard
     SmartDashboard.putNumber("JoyX", JoyX);
