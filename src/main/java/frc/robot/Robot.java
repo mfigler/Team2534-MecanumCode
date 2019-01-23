@@ -1,9 +1,11 @@
+
 /*----------------------------------------------------------------------------*/
 /* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
+
 
 package frc.robot;
 
@@ -30,23 +32,16 @@ import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
 
 
-
-/**
- * This is a demo program showing how to use Mecanum control with the RobotDrive
- * class.
- */
 public class Robot extends IterativeRobot {
- 
 
 
   MecanumDrive m_robotDrive;
-  WPI_TalonSRX frontLeft = new WPI_TalonSRX(RobotMap.frontLeftChannel);
-  WPI_TalonSRX rearLeft = new WPI_TalonSRX(RobotMap.rearLeftChannel);
-  WPI_TalonSRX frontRight = new WPI_TalonSRX(RobotMap.frontRightChannel);
-  WPI_TalonSRX rearRight = new WPI_TalonSRX(RobotMap.rearRightChannel);
+  WPI_TalonSRX frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
+  WPI_TalonSRX rearLeft = new WPI_TalonSRX(RobotMap.talonRearLeftChannel);
+  WPI_TalonSRX frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
+  WPI_TalonSRX rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
+  Encoder testCoder;
 
-	
- 
   double deadzone = 0.15;
   double JoyY = 0;
   double JoyX = 0;
@@ -54,11 +49,14 @@ public class Robot extends IterativeRobot {
   boolean JoyA = false;
   double rightTrigger = 0.0;
   boolean joyButtonX = false;
+  boolean JoyB;
+
   double Target = 0.5;
   double CorrectSpeed = 0.2;
-  XboxController controller = new XboxController(0);
+  XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
   int frames = 30;
   double currentData;
+  int ledCode = 1;
 
  
   //instantiate output of PIDout
@@ -89,6 +87,8 @@ public class Robot extends IterativeRobot {
   public double distance = 0;
   double actualSkew;
 
+  LED Leds = new LED();
+
 
   @Override
   public void robotInit() {
@@ -98,9 +98,7 @@ public class Robot extends IterativeRobot {
     frontRight.setInverted(true);
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
-    
-    //Setup Encoders
-    
+   
     
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
@@ -184,7 +182,6 @@ public class Robot extends IterativeRobot {
       actualSkew = Math.abs(skew) - 90;
     }
     StrafeValue = actualSkew;
-   
 
     //post to smart dashboard periodically
     SmartDashboard.putNumber("LimelightX", x);
@@ -193,18 +190,21 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
     
 
-    JoyA = controller.getRawButton(1);
+
     rightTrigger = controller.getRawAxis(3);
-    JoyY = controller.getRawAxis(1);
-    JoyX = controller.getRawAxis(0);
-    JoyZ = controller.getRawAxis(4);
     joyButtonX = controller.getRawButton(3);
+    JoyA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
+    JoyB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
+    JoyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
+    JoyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
+    JoyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
 
 
     //Read Values on Smartdashboard
     SmartDashboard.putNumber("JoyX", JoyX);
     SmartDashboard.putNumber("JoyY", JoyY);
     SmartDashboard.putNumber("JoyZ", JoyZ);
+    SmartDashboard.putNumber("timer", ledCode);
     
     //Deadzone
     if (Math.abs(JoyY) < (deadzone)) {
@@ -235,6 +235,11 @@ public class Robot extends IterativeRobot {
       encoderLoop.disable();
       m_robotDrive.driveCartesian(JoyX, -JoyY, -JoyZ, 0.0);
     }
-
+    if (JoyB){
+      Leds.sendCode(2);
+    } else{
+      Leds.sendCode(1);
+      
+    }
   }
 }

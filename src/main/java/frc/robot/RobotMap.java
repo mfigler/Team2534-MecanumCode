@@ -2,17 +2,18 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
 
-
 public class RobotMap extends IterativeRobot {
 
-public static int frontLeftChannel = 3;
-public static int rearLeftChannel = 4;
-public static int frontRightChannel = 1;
-public static int rearRightChannel = 2;
-public static int joystickChannel = 0;
+public static int talonFrontLeftChannel = 3;
+public static int talonRearLeftChannel = 4;
+public static int talonFrontRightChannel = 1;
+public static int talonRearRightChannel = 2;
 public static int xBoxControllerChannel = 0;
-public static int buttonAChannel = 1;
-public static int leftYXboxJoystickChannel = 1;
-public static int leftXXboxJoystickChannel = 0;
-public static int rightXXboxJoystickChannel = 4;
+public static int xBoxButtonAChannel = 1;
+public static int xBoxButtonBChannel = 2;
+public static int xBoxLeftStickYChannel = 1;
+public static int xBoxLeftStickXChannel = 0;
+public static int xBoxRightStickXChannel = 4;
+public static int encoderAChannel = 0;
+public static int encoderBChannel = 1;
 }
