@@ -52,6 +52,7 @@ public class Robot extends IterativeRobot {
   double JoyX = 0;
   double JoyZ = 0;
   boolean JoyA = false;
+  double rightTrigger = 0.0;
   boolean joyButtonX = false;
   double Target = 0.5;
   double CorrectSpeed = 0.2;
@@ -64,21 +65,28 @@ public class Robot extends IterativeRobot {
   PIDout output = new PIDout(this); 
   PIDoutX strafeOutput = new PIDoutX(this);
   PIDoutY forwardOutput = new PIDoutY(this);
+  EncoderPID encoderPID = new EncoderPID(this);
   
   //Ints. Class 
   CameraSource limelight = new CameraSource(this); 
   CameraSourceX limelightX = new CameraSourceX(this);
   CameraSourceY limelightY = new CameraSourceY(this);
+  EncoderSource encoder = new EncoderSource(this);
 
   //Set PIDs
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, output);
   PIDController strafeLoop = new PIDController(0.12, 0.0, 0.0, limelightX, strafeOutput);
   PIDController forwardLoop = new PIDController(0.04, 0.0, 0.0, limelightY, forwardOutput);
+  PIDController encoderLoop = new PIDController(0.02, 0.0, 0.0, encoder, encoderPID);
   
   //Global Varable for CameraValues
   public double CameraValue = 0;
   public double StrafeValue = 0;
   public double ForwardValue = 0;
+  public double encoderValue = 0;
+  public double rotations = 0;
+  public double circumfrence = 0;
+  public double distance = 0;
   double actualSkew;
 
 
@@ -106,6 +114,11 @@ public class Robot extends IterativeRobot {
     forwardLoop.setSetpoint(8.0);
     forwardLoop.setOutputRange(-0.5,0.5);
     forwardLoop.setInputRange(-25.0, 25.0); 
+
+    encoderLoop.setSetpoint(24.0); //distance
+    encoderLoop.setOutputRange(-0.5,0.5); //max speed
+    encoderLoop.setInputRange(-25.0, 25.0); //the minimum or maximum percentage to write to the output
+
 
     /*new Thread(() -> {
         
@@ -137,10 +150,10 @@ public class Robot extends IterativeRobot {
   @Override
   public void teleopPeriodic() {
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
-    double encoderValue = -rearRight.getSelectedSensorPosition(0);
-    double rotations = encoderValue/4000;
-    double circumfrence = Math.PI*8;
-    double distance = circumfrence * rotations;
+    encoderValue = -rearRight.getSelectedSensorPosition(0);
+    rotations = encoderValue/4000;
+    circumfrence = Math.PI*8;
+    distance = circumfrence * rotations;
     SmartDashboard.putNumber("Rotations", rotations);
     SmartDashboard.putNumber("Encoder Value", encoderValue);
     SmartDashboard.putNumber("Distance", distance);
@@ -181,6 +194,7 @@ public class Robot extends IterativeRobot {
     
 
     JoyA = controller.getRawButton(1);
+    rightTrigger = controller.getRawAxis(3);
     JoyY = controller.getRawAxis(1);
     JoyX = controller.getRawAxis(0);
     JoyZ = controller.getRawAxis(4);
@@ -202,6 +216,7 @@ public class Robot extends IterativeRobot {
     if (Math.abs(JoyZ) < (deadzone)) {
       JoyZ = 0;
     }
+    
 
 
     //Controlling PID Loops 
@@ -210,10 +225,14 @@ public class Robot extends IterativeRobot {
       strafeLoop.enable();
       forwardLoop.enable();
       m_robotDrive.driveCartesian(strafeOutput.outputX, forwardOutput.outputY, output.outputSkew, 0.0);
-    } else {
+    } else if (rightTrigger > 0.6){
+      encoderLoop.enable();
+      m_robotDrive.driveCartesian(0.0, encoderPID.outputEncoder, 0.0, 0.0);
+    }else{
       visionLoop.disable();
       strafeLoop.disable();
       forwardLoop.disable();
+      encoderLoop.disable();
       m_robotDrive.driveCartesian(JoyX, -JoyY, -JoyZ, 0.0);
     }
 
