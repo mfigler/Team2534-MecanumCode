@@ -1,7 +1,16 @@
+
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
+
 package frc.robot;
 
+
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.XboxController;
 import com.ctre.phoenix.motorcontrol.can.*;
@@ -24,7 +33,9 @@ import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
 
+
 public class Robot extends IterativeRobot {
+
 
   MecanumDrive m_robotDrive;
   WPI_TalonSRX frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
@@ -32,14 +43,18 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
   WPI_TalonSRX rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
   Encoder testCoder;
+
   double deadzone = 0.15;
   double JoyY = 0;
   double JoyX = 0;
   double JoyZ = 0;
   double rightTrigger = 0;
   boolean ButtonA;
+  boolean ButtonB;
   boolean ButtonX;
+  boolean ButtonY;
   boolean ButtonRight;
+  boolean ButtonLeft;
   double Target = 0.5;
   double CorrectSpeed = 0.2;
   XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
@@ -134,11 +149,16 @@ public class Robot extends IterativeRobot {
   @Override
   public void teleopPeriodic() {
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
-    if (controller.getRawButton(2)){
-      testCoder.reset();
+    encoderValue = -rearRight.getSelectedSensorPosition(0);
+    rotations = encoderValue/4000;
+    circumfrence = Math.PI*8;
+    distance = circumfrence * rotations;
+    SmartDashboard.putNumber("Rotations", rotations);
+    SmartDashboard.putNumber("Encoder Value", encoderValue);
+    SmartDashboard.putNumber("Distance", distance);
+    if (ButtonX) {
+        rearRight.setSelectedSensorPosition(0, 0, 0);
     }
-    SmartDashboard.putNumber("Encoder Value:" , testCoder.getDistance());    
-    
     
     
     // Use the joystick X axis for lateral movement, Y axis for forward
@@ -171,11 +191,15 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
     
 
+
+    rightTrigger = controller.getRawAxis(3);
+    ButtonX = controller.getRawButton(3);
     ButtonA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
-    ButtonX = controller.getRawButton(RobotMap.xBoxButtonXChannel);
+    ButtonB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
     JoyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     JoyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
     JoyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
+
 
     //Read Values on Smartdashboard
     SmartDashboard.putNumber("JoyX", JoyX);
@@ -193,6 +217,7 @@ public class Robot extends IterativeRobot {
     if (Math.abs(JoyZ) < (deadzone)) {
       JoyZ = 0;
     }
+    
 
 
     //Controlling PID Loops 
@@ -204,7 +229,7 @@ public class Robot extends IterativeRobot {
     } else if (rightTrigger > 0.6){
       encoderLoop.enable();
       m_robotDrive.driveCartesian(0.0, encoderPID.outputEncoder, 0.0, 0.0);
-    } else{
+    }else{
       visionLoop.disable();
       strafeLoop.disable();
       forwardLoop.disable();
