@@ -1,8 +1,16 @@
 
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
+
 package frc.robot;
 
+
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.XboxController;
 import com.ctre.phoenix.motorcontrol.can.*;
@@ -15,7 +23,8 @@ import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port; 
 import edu.wpi.first.wpilibj.command.Subsystem;
-import edu.wpi.first.wpilibj.Encoder;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 
 import edu.wpi.cscore.*;
 import edu.wpi.cscore.CvSink;
@@ -25,18 +34,23 @@ import edu.wpi.cscore.UsbCamera;
 
 public class Robot extends IterativeRobot {
 
+
   MecanumDrive m_robotDrive;
   WPI_TalonSRX frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
   WPI_TalonSRX rearLeft = new WPI_TalonSRX(RobotMap.talonRearLeftChannel);
   WPI_TalonSRX frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
   WPI_TalonSRX rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
   Encoder testCoder;
+
   double deadzone = 0.15;
   double JoyY = 0;
   double JoyX = 0;
   double JoyZ = 0;
-  boolean JoyA;
+  boolean JoyA = false;
+  double rightTrigger = 0.0;
+  boolean joyButtonX = false;
   boolean JoyB;
+
   double Target = 0.5;
   double CorrectSpeed = 0.2;
   XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
@@ -49,21 +63,28 @@ public class Robot extends IterativeRobot {
   PIDout output = new PIDout(this); 
   PIDoutX strafeOutput = new PIDoutX(this);
   PIDoutY forwardOutput = new PIDoutY(this);
+  EncoderPID encoderPID = new EncoderPID(this);
   
   //Ints. Class 
   CameraSource limelight = new CameraSource(this); 
   CameraSourceX limelightX = new CameraSourceX(this);
   CameraSourceY limelightY = new CameraSourceY(this);
+  EncoderSource encoder = new EncoderSource(this);
 
   //Set PIDs
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, output);
   PIDController strafeLoop = new PIDController(0.12, 0.0, 0.0, limelightX, strafeOutput);
   PIDController forwardLoop = new PIDController(0.04, 0.0, 0.0, limelightY, forwardOutput);
+  PIDController encoderLoop = new PIDController(0.02, 0.0, 0.0, encoder, encoderPID);
   
   //Global Varable for CameraValues
   public double CameraValue = 0;
   public double StrafeValue = 0;
   public double ForwardValue = 0;
+  public double encoderValue = 0;
+  public double rotations = 0;
+  public double circumfrence = 0;
+  public double distance = 0;
   double actualSkew;
 
   LED Leds = new LED();
@@ -76,10 +97,8 @@ public class Robot extends IterativeRobot {
     rearLeft.setInverted(false);
     frontRight.setInverted(true);
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
-    
-    //Setup Encoders
-    testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel);
-    testCoder.setDistancePerPulse((Math.PI * 8) / 360); 
+    rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
+   
     
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
@@ -93,6 +112,11 @@ public class Robot extends IterativeRobot {
     forwardLoop.setSetpoint(8.0);
     forwardLoop.setOutputRange(-0.5,0.5);
     forwardLoop.setInputRange(-25.0, 25.0); 
+
+    encoderLoop.setSetpoint(24.0); //distance
+    encoderLoop.setOutputRange(-0.5,0.5); //max speed
+    encoderLoop.setInputRange(-25.0, 25.0); //the minimum or maximum percentage to write to the output
+
 
     /*new Thread(() -> {
         
@@ -124,11 +148,16 @@ public class Robot extends IterativeRobot {
   @Override
   public void teleopPeriodic() {
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
-    if (controller.getRawButton(2)){
-      testCoder.reset();
+    encoderValue = -rearRight.getSelectedSensorPosition(0);
+    rotations = encoderValue/4000;
+    circumfrence = Math.PI*8;
+    distance = circumfrence * rotations;
+    SmartDashboard.putNumber("Rotations", rotations);
+    SmartDashboard.putNumber("Encoder Value", encoderValue);
+    SmartDashboard.putNumber("Distance", distance);
+    if (joyButtonX) {
+        rearRight.setSelectedSensorPosition(0, 0, 0);
     }
-    SmartDashboard.putNumber("Encoder Value:" , testCoder.getDistance());    
-    
     
     
     // Use the joystick X axis for lateral movement, Y axis for forward
@@ -161,11 +190,15 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
     
 
+
+    rightTrigger = controller.getRawAxis(3);
+    joyButtonX = controller.getRawButton(3);
     JoyA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
     JoyB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
     JoyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     JoyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
     JoyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
+
 
     //Read Values on Smartdashboard
     SmartDashboard.putNumber("JoyX", JoyX);
@@ -183,6 +216,7 @@ public class Robot extends IterativeRobot {
     if (Math.abs(JoyZ) < (deadzone)) {
       JoyZ = 0;
     }
+    
 
 
     //Controlling PID Loops 
@@ -191,10 +225,14 @@ public class Robot extends IterativeRobot {
       strafeLoop.enable();
       forwardLoop.enable();
       m_robotDrive.driveCartesian(strafeOutput.outputX, forwardOutput.outputY, output.outputSkew, 0.0);
-    } else {
+    } else if (rightTrigger > 0.6){
+      encoderLoop.enable();
+      m_robotDrive.driveCartesian(0.0, encoderPID.outputEncoder, 0.0, 0.0);
+    }else{
       visionLoop.disable();
       strafeLoop.disable();
       forwardLoop.disable();
+      encoderLoop.disable();
       m_robotDrive.driveCartesian(JoyX, -JoyY, -JoyZ, 0.0);
     }
     if (JoyB){
