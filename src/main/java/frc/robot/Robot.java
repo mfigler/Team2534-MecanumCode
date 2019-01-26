@@ -67,7 +67,7 @@ public class Robot extends IterativeRobot {
 
   //Set PIDs
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, output);
-  PIDController strafeLoop = new PIDController(0.18, 0.0, 0.0, limelightX, strafeOutput);
+  PIDController strafeLoop = new PIDController(0.11, 0.0, 0.0, limelightX, strafeOutput);
   PIDController forwardLoop = new PIDController(0.04, 0.0, 0.0, limelightY, forwardOutput);
   
   //Global Varable for CameraValues
@@ -92,11 +92,11 @@ public class Robot extends IterativeRobot {
     testCoder.setDistancePerPulse((Math.PI * 8) / 360);     
 
     //Seting Camera value Ranges and Setpoints
-    strafeLoop.setSetpoint(0.0);
+    strafeLoop.setSetpoint(3.6);
     strafeLoop.setOutputRange(-1,1);
     strafeLoop.setInputRange(-25.0, 25.0);
     
-    visionLoop.setSetpoint(3.76);
+    visionLoop.setSetpoint(0.0);
     visionLoop.setOutputRange(-1,1);
     visionLoop.setInputRange(-25.0, 25.0);
     
@@ -232,9 +232,11 @@ public class Robot extends IterativeRobot {
     }
 
     //Checking if reflective tape area is less and change LED lights
+
     if(y < 4)
     {
-      if(area >= 4.0 && x > -5.5 && x < 5.5)
+      //Lower Hatches
+      if(area >= 4.0 && x > -4 && x < 4)
       {
         Leds.sendCode(1);
       }  
@@ -245,6 +247,7 @@ public class Robot extends IterativeRobot {
     }
     else if(y > 4)
     {
+      //Ball Hatches
       if(area >= 2.5 && x > -3.5 && x < 3.5)
       {
         Leds.sendCode(1);
