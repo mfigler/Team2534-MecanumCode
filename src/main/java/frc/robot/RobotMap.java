@@ -10,6 +10,7 @@ public static int talonFrontRightChannel = 1;
 public static int talonRearRightChannel = 2;
 public static int xBoxControllerChannel = 0;
 public static int xBoxButtonAChannel = 1;
+public static int xBoxButtonBChannel = 2;
 public static int xBoxLeftStickYChannel = 1;
 public static int xBoxLeftStickXChannel = 0;
 public static int xBoxRightStickXChannel = 4;
