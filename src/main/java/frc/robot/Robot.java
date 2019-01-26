@@ -81,9 +81,8 @@ public class Robot extends IterativeRobot {
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     
     //Setup Encoders
-    testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel);
-    testCoder.setDistancePerPulse((Math.PI * 8) / 360); 
-    
+    testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel, false, Encoder.EncodingType.k4X);
+    testCoder.setDistancePerPulse((Math.PI * 8) / 360);     
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
     strafeLoop.setOutputRange(-1,1);
@@ -130,7 +129,8 @@ public class Robot extends IterativeRobot {
     if (controller.getRawButton(2)){
       testCoder.reset();
     }
-    SmartDashboard.putNumber("Encoder Value:" , testCoder.getDistance());    
+    SmartDashboard.putNumber("Encoder Distance:" , testCoder.getDistance());   
+    SmartDashboard.putNumber("Encoder Value:" , testCoder.get());  
     
     
     
