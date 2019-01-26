@@ -16,14 +16,22 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port; 
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.Encoder;
-
 import edu.wpi.cscore.*;
 import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
-
+import edu.wpi.first.wpilibj.CameraServer;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.cscore.VideoSource;
 
 public class Robot extends IterativeRobot {
+  private static final int kFrontLeftChannel = 3;
+  private static final int kRearLeftChannel = 4;
+  private static final int kFrontRightChannel = 1;
+  private static final int kRearRightChannel = 2;
+  private static final int kJoystickChannel = 0;
 
   MecanumDrive m_robotDrive;
   WPI_TalonSRX frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
@@ -31,6 +39,7 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
   WPI_TalonSRX rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
   Encoder testCoder;
+  
   double deadzone = 0.15;
   double JoyY = 0;
   double JoyX = 0;
@@ -42,6 +51,7 @@ public class Robot extends IterativeRobot {
   XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
   int frames = 30;
   double currentData;
+  public double preTime = 0.0; 
   int ledCode = 1;
 
  
@@ -57,7 +67,7 @@ public class Robot extends IterativeRobot {
 
   //Set PIDs
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, output);
-  PIDController strafeLoop = new PIDController(0.12, 0.0, 0.0, limelightX, strafeOutput);
+  PIDController strafeLoop = new PIDController(0.18, 0.0, 0.0, limelightX, strafeOutput);
   PIDController forwardLoop = new PIDController(0.04, 0.0, 0.0, limelightY, forwardOutput);
   
   //Global Varable for CameraValues
@@ -80,16 +90,17 @@ public class Robot extends IterativeRobot {
     //Setup Encoders
     testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel, false, Encoder.EncodingType.k4X);
     testCoder.setDistancePerPulse((Math.PI * 8) / 360);     
+
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
     strafeLoop.setOutputRange(-1,1);
     strafeLoop.setInputRange(-25.0, 25.0);
     
-    visionLoop.setSetpoint(0.0);
+    visionLoop.setSetpoint(3.76);
     visionLoop.setOutputRange(-1,1);
     visionLoop.setInputRange(-25.0, 25.0);
     
-    forwardLoop.setSetpoint(8.0);
+    forwardLoop.setSetpoint(6.4);
     forwardLoop.setOutputRange(-0.5,0.5);
     forwardLoop.setInputRange(-25.0, 25.0); 
 
@@ -118,8 +129,34 @@ public class Robot extends IterativeRobot {
           Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
           outputStream.putFrame(output);
       }).start();*/
-    }
 
+      /*new Thread(() -> {
+        Timer frameTimer = new Timer();
+        frameTimer.start();
+        preTime = frameTimer.get();
+        UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+        camera.setVideoMode(VideoMode.PixelFormat.kMJPEG , 320, 240, 30);
+        //camera.setResolution(320, 240);
+        //camera.setFPS(30);
+        
+        CvSink cvSink = CameraServer.getInstance().getVideo();
+        CvSource outputStream = CameraServer.getInstance().putVideo("Blur", 200, 200);
+        
+        Mat source = new Mat();
+        Mat output = new Mat();
+        
+        while(!Thread.interrupted()) {
+            double currentTime = frameTimer.get();
+            double diffTime = currentTime - preTime;
+            SmartDashboard.putNumber("FPSTimer", (1/diffTime));
+            preTime = currentTime;
+            cvSink.grabFrame(source);
+            Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+            outputStream.putFrame(output);
+        }
+    }).start();*/
+
+    }
   @Override
   public void teleopPeriodic() {
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
@@ -128,8 +165,6 @@ public class Robot extends IterativeRobot {
     }
     SmartDashboard.putNumber("Encoder Distance:" , testCoder.getDistance());   
     SmartDashboard.putNumber("Encoder Value:" , testCoder.get());  
-    
-    
     
     // Use the joystick X axis for lateral movement, Y axis for forward
     // movement, and Z axis for rotation.
@@ -149,7 +184,7 @@ public class Robot extends IterativeRobot {
     
     if (skew > -45){
       actualSkew = Math.abs(skew);
-    }else {
+    } else {
       actualSkew = Math.abs(skew) - 90;
     }
     StrafeValue = actualSkew;
@@ -159,7 +194,6 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
-    
 
     JoyA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
     JoyB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
@@ -184,7 +218,6 @@ public class Robot extends IterativeRobot {
       JoyZ = 0;
     }
 
-
     //Controlling PID Loops 
     if (JoyA){
       visionLoop.enable();
@@ -197,11 +230,38 @@ public class Robot extends IterativeRobot {
       forwardLoop.disable();
       m_robotDrive.driveCartesian(JoyX, -JoyY, -JoyZ, 0.0);
     }
-    if (JoyB){
-      Leds.sendCode(2);
-    } else{
-      Leds.sendCode(1);
-      
+
+    //Checking if reflective tape area is less and change LED lights
+    if(y < 4)
+    {
+      if(area >= 4.0 && x > -5.5 && x < 5.5)
+      {
+        Leds.sendCode(1);
+      }  
+      else
+      {
+        Leds.sendCode(2);
+      }
     }
+    else if(y > 4)
+    {
+      if(area >= 2.5 && x > -3.5 && x < 3.5)
+      {
+        Leds.sendCode(1);
+      }
+      else
+      {
+        Leds.sendCode(2);
+      }
+    }
+    else 
+    {
+      Leds.sendCode(2);
+    }
+
+    if (JoyB){
+      Leds.sendCode(9);
+    }
+
   }
 }
