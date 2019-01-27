@@ -15,7 +15,8 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port; 
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Compressor;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
@@ -63,7 +64,8 @@ public class Robot extends IterativeRobot {
   double currentData;
   public double preTime = 0.0; 
   int ledCode = 1;
-  Solenoid solenoid = new Solenoid(RobotMap.solenoidChannel);
+  //DoubleSolenoid solenoid = new DoubleSolenoid(RobotMap.doubleSolenoidChannel);
+  Compressor compressor = new Compressor();
 
  
   //instantiate output of PIDout
@@ -102,6 +104,9 @@ public class Robot extends IterativeRobot {
     rearLeft.setInverted(false);
     frontRight.setInverted(true);
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
+    
+    //Start Compressor
+    compressor.start();
 
     //Setup Encoders
     testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel, false, Encoder.EncodingType.k4X);
@@ -306,11 +311,11 @@ public class Robot extends IterativeRobot {
       Leds.sendCode(9);
     }
 
-    if (buttonRight){
+    /*if (buttonRight){
       solenoid.set(true);
     }  else{
       solenoid.set(false);
-    }
+    }*/
   }  
   
   public void testPeriodic(){
