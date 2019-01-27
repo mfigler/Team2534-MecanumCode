@@ -231,6 +231,7 @@ public class Robot extends IterativeRobot {
     buttonA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
     buttonB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
     buttonX = controller.getRawButton(RobotMap.xBoxButtonXChannel);
+    rightButton = controller.getRawButton(RobotMap.xBoxButtonRightChannel);
     joyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     joyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
     joyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
