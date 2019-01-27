@@ -1,4 +1,3 @@
-
 package frc.robot;
 import edu.wpi.first.wpilibj.PIDOutput;
 
@@ -15,4 +14,3 @@ public class EncoderPID implements PIDOutput{
       
     }
 }
-

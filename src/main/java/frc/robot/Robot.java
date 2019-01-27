@@ -24,6 +24,8 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port; 
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Solenoid;
+
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 
@@ -56,11 +58,13 @@ public class Robot extends IterativeRobot {
   double JoyY = 0;
   double JoyX = 0;
   double JoyZ = 0;
-  boolean JoyA = false;
-  double rightTrigger = 0.0;
-  boolean joyButtonX = false;
-  boolean JoyB;
-
+  double rightTrigger = 0;
+  boolean ButtonA;
+  boolean ButtonB;
+  boolean ButtonX;
+  boolean ButtonY;
+  boolean ButtonRight;
+  boolean ButtonLeft;
   double Target = 0.5;
   double CorrectSpeed = 0.2;
   XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
@@ -68,6 +72,7 @@ public class Robot extends IterativeRobot {
   double currentData;
   public double preTime = 0.0; 
   int ledCode = 1;
+  Solenoid solenoid = new Solenoid(RobotMap.solenoidChannel);
 
  
   //instantiate output of PIDout
@@ -75,7 +80,6 @@ public class Robot extends IterativeRobot {
   PIDoutX strafeOutput = new PIDoutX(this);
   PIDoutY forwardOutput = new PIDoutY(this);
   EncoderPID encoderPID = new EncoderPID(this);
-  
   //Ints. Class 
   CameraSource limelight = new CameraSource(this); 
   CameraSourceX limelightX = new CameraSourceX(this);
@@ -87,7 +91,6 @@ public class Robot extends IterativeRobot {
   PIDController strafeLoop = new PIDController(0.11, 0.0, 0.0, limelightX, strafeOutput);
   PIDController forwardLoop = new PIDController(0.04, 0.0, 0.0, limelightY, forwardOutput);
   PIDController encoderLoop = new PIDController(0.02, 0.0, 0.0, encoder, encoderPID);
-  
   //Global Varable for CameraValues
   public double CameraValue = 0;
   public double StrafeValue = 0;
@@ -114,7 +117,6 @@ public class Robot extends IterativeRobot {
     testCoder.setDistancePerPulse((Math.PI * 8) / 360);     
 
     rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
-   
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(3.6);
     strafeLoop.setOutputRange(-1,1);
@@ -131,7 +133,6 @@ public class Robot extends IterativeRobot {
     encoderLoop.setSetpoint(24.0); //distance
     encoderLoop.setOutputRange(-0.5,0.5); //max speed
     encoderLoop.setInputRange(-25.0, 25.0); //the minimum or maximum percentage to write to the output
-
 
     /*new Thread(() -> {
         
@@ -196,7 +197,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("Rotations", rotations);
     SmartDashboard.putNumber("Encoder Value", encoderValue);
     SmartDashboard.putNumber("Distance", distance);
-    if (joyButtonX) {
+    if (ButtonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
 
@@ -234,9 +235,9 @@ public class Robot extends IterativeRobot {
 
 
     rightTrigger = controller.getRawAxis(3);
-    joyButtonX = controller.getRawButton(3);
-    JoyA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
-    JoyB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
+    ButtonX = controller.getRawButton(3);
+    ButtonA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
+    ButtonB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
     JoyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     JoyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
     JoyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
@@ -261,7 +262,7 @@ public class Robot extends IterativeRobot {
     
 
     //Controlling PID Loops 
-    if (JoyA){
+    if (ButtonA){
       visionLoop.enable();
       strafeLoop.enable();
       forwardLoop.enable();
@@ -276,6 +277,7 @@ public class Robot extends IterativeRobot {
       encoderLoop.disable();
       m_robotDrive.driveCartesian(JoyX, -JoyY, -JoyZ, 0.0);
     }
+
 
     //Checking if reflective tape area is less and change LED lights
 
@@ -308,9 +310,28 @@ public class Robot extends IterativeRobot {
       Leds.sendCode(2);
     }
 
+
     if (JoyB){
       Leds.sendCode(9);
     }
 
+    if (ButtonRight){
+      solenoid.set(true);
+    }  else{
+      solenoid.set(false);
+    }
+  }  
+  
+  public void testPeriodic(){
+  /*Proper Code On Robot
+  Ping Talons(Drive Base, Arms)
+  Limelight Sees Vision Targets
+  Vision Camera Sends Feed
+  LEDs Work
+  Compressor Runs
+  Indicator Light Works
+  Encoders Returning Values
+  Motors Run
+  Joysticks Return Value*/
   }
 }
