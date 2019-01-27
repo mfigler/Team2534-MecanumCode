@@ -4,6 +4,8 @@ package frc.robot;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+
 import com.ctre.phoenix.motorcontrol.can.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -15,6 +17,7 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port; 
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.SolenoidBase;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Compressor;
 
@@ -32,14 +35,8 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.cscore.VideoSource;
 
 public class Robot extends IterativeRobot {
-  private static final int kFrontLeftChannel = 3;
-  private static final int kRearLeftChannel = 4;
-  private static final int kFrontRightChannel = 1;
-  private static final int kRearRightChannel = 2;
-  private static final int kJoystickChannel = 0;
 
-
-  MecanumDrive m_robotDrive;
+  MecanumDrive robotDrive;
   WPI_TalonSRX frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
   WPI_TalonSRX rearLeft = new WPI_TalonSRX(RobotMap.talonRearLeftChannel);
   WPI_TalonSRX frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
@@ -57,14 +54,14 @@ public class Robot extends IterativeRobot {
   boolean buttonY;
   boolean buttonRight;
   boolean buttonLeft;
-  double Target = 0.5;
-  double CorrectSpeed = 0.2;
+  double target = 0.5;
+  double correctSpeed = 0.2;
   XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
   int frames = 30;
   double currentData;
   public double preTime = 0.0; 
   int ledCode = 1;
-  //DoubleSolenoid solenoid = new DoubleSolenoid(RobotMap.doubleSolenoidChannel);
+  DoubleSolenoid doubleSolenoid = new DoubleSolenoid(RobotMap.doubleSolenoidForwardChannel, RobotMap.doubleSolenoidReverseChannel);
   Compressor compressor = new Compressor();
 
  
@@ -103,7 +100,7 @@ public class Robot extends IterativeRobot {
     frontLeft.setInverted(true);
     rearLeft.setInverted(false);
     frontRight.setInverted(true);
-    m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
+    robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     
     //Start Compressor
     compressor.start();
@@ -262,16 +259,16 @@ public class Robot extends IterativeRobot {
       visionLoop.enable();
       strafeLoop.enable();
       forwardLoop.enable();
-      m_robotDrive.driveCartesian(strafeOutput.outputX, forwardOutput.outputY, output.outputSkew, 0.0);
+      robotDrive.driveCartesian(strafeOutput.outputX, forwardOutput.outputY, output.outputSkew, 0.0);
     } else if (rightTrigger > 0.6){
       encoderLoop.enable();
-      m_robotDrive.driveCartesian(0.0, encoderPID.outputEncoder, 0.0, 0.0);
+      robotDrive.driveCartesian(0.0, encoderPID.outputEncoder, 0.0, 0.0);
     }else{
       visionLoop.disable();
       strafeLoop.disable();
       forwardLoop.disable();
       encoderLoop.disable();
-      m_robotDrive.driveCartesian(joyX, -joyY, -joyZ, 0.0);
+      robotDrive.driveCartesian(joyX, -joyY, -joyZ, 0.0);
     }
 
 
@@ -311,11 +308,11 @@ public class Robot extends IterativeRobot {
       Leds.sendCode(9);
     }
 
-    /*if (buttonRight){
-      solenoid.set(true);
+    if (buttonRight){
+      doubleSolenoid.set(Value.kForward);
     }  else{
-      solenoid.set(false);
-    }*/
+      doubleSolenoid.set(Value.kReverse);
+    }
   }  
   
   public void testPeriodic(){
