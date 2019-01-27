@@ -1,12 +1,3 @@
-
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
-
-
 package frc.robot;
 
 
@@ -55,16 +46,16 @@ public class Robot extends IterativeRobot {
   Encoder testCoder;
 
   double deadzone = 0.15;
-  double JoyY = 0;
-  double JoyX = 0;
-  double JoyZ = 0;
+  double joyY = 0;
+  double joyX = 0;
+  double joyZ = 0;
   double rightTrigger = 0;
-  boolean ButtonA;
-  boolean ButtonB;
-  boolean ButtonX;
-  boolean ButtonY;
-  boolean ButtonRight;
-  boolean ButtonLeft;
+  boolean buttonA;
+  boolean buttonB;
+  boolean buttonX;
+  boolean buttonY;
+  boolean buttonRight;
+  boolean buttonLeft;
   double Target = 0.5;
   double CorrectSpeed = 0.2;
   XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
@@ -197,7 +188,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("Rotations", rotations);
     SmartDashboard.putNumber("Encoder Value", encoderValue);
     SmartDashboard.putNumber("Distance", distance);
-    if (ButtonX) {
+    if (buttonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
 
@@ -234,35 +225,35 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
 
 
-    rightTrigger = controller.getRawAxis(3);
-    ButtonX = controller.getRawButton(3);
-    ButtonA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
-    ButtonB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
-    JoyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
-    JoyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
-    JoyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
+    rightTrigger = controller.getRawAxis(RobotMap.xBoxRightTriggerChannel);
+    buttonA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
+    buttonB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
+    buttonX = controller.getRawButton(RobotMap.xBoxButtonXChannel);
+    joyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
+    joyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
+    joyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
 
 
     //Read Values on Smartdashboard
-    SmartDashboard.putNumber("JoyX", JoyX);
-    SmartDashboard.putNumber("JoyY", JoyY);
-    SmartDashboard.putNumber("JoyZ", JoyZ);
+    SmartDashboard.putNumber("JoyX", joyX);
+    SmartDashboard.putNumber("JoyY", joyY);
+    SmartDashboard.putNumber("JoyZ", joyZ);
     SmartDashboard.putNumber("timer", ledCode);
     
     //Deadzone
-    if (Math.abs(JoyY) < (deadzone)) {
-      JoyY = 0;
+    if (Math.abs(joyY) < (deadzone)) {
+      joyY = 0;
     }
-    if (Math.abs(JoyX) < (deadzone)) {
-      JoyX = 0;
+    if (Math.abs(joyX) < (deadzone)) {
+      joyX = 0;
     }
-    if (Math.abs(JoyZ) < (deadzone)) {
-      JoyZ = 0;
+    if (Math.abs(joyZ) < (deadzone)) {
+      joyZ = 0;
     }
     
 
     //Controlling PID Loops 
-    if (ButtonA){
+    if (buttonA){
       visionLoop.enable();
       strafeLoop.enable();
       forwardLoop.enable();
@@ -275,7 +266,7 @@ public class Robot extends IterativeRobot {
       strafeLoop.disable();
       forwardLoop.disable();
       encoderLoop.disable();
-      m_robotDrive.driveCartesian(JoyX, -JoyY, -JoyZ, 0.0);
+      m_robotDrive.driveCartesian(joyX, -joyY, -joyZ, 0.0);
     }
 
 
@@ -311,11 +302,11 @@ public class Robot extends IterativeRobot {
     }
 
 
-    if (JoyB){
+    if (buttonB){
       Leds.sendCode(9);
     }
 
-    if (ButtonRight){
+    if (buttonRight){
       solenoid.set(true);
     }  else{
       solenoid.set(false);
