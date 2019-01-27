@@ -14,6 +14,6 @@ public static int xBoxButtonBChannel = 2;
 public static int xBoxLeftStickYChannel = 1;
 public static int xBoxLeftStickXChannel = 0;
 public static int xBoxRightStickXChannel = 4;
-public static int encoderAChannel = 0;
+public static int encoderAChannel = 2;
 public static int encoderBChannel = 1;
 }

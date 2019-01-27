@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.I2C.Port;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Solenoid;
+
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 
@@ -32,9 +33,18 @@ import edu.wpi.cscore.*;
 import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
-
+import edu.wpi.first.wpilibj.CameraServer;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.cscore.VideoSource;
 
 public class Robot extends IterativeRobot {
+  private static final int kFrontLeftChannel = 3;
+  private static final int kRearLeftChannel = 4;
+  private static final int kFrontRightChannel = 1;
+  private static final int kRearRightChannel = 2;
+  private static final int kJoystickChannel = 0;
 
 
   MecanumDrive m_robotDrive;
@@ -60,6 +70,7 @@ public class Robot extends IterativeRobot {
   XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
   int frames = 30;
   double currentData;
+  public double preTime = 0.0; 
   int ledCode = 1;
   Solenoid solenoid = new Solenoid(RobotMap.solenoidChannel);
 
@@ -77,7 +88,7 @@ public class Robot extends IterativeRobot {
 
   //Set PIDs
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, output);
-  PIDController strafeLoop = new PIDController(0.12, 0.0, 0.0, limelightX, strafeOutput);
+  PIDController strafeLoop = new PIDController(0.11, 0.0, 0.0, limelightX, strafeOutput);
   PIDController forwardLoop = new PIDController(0.04, 0.0, 0.0, limelightY, forwardOutput);
   PIDController encoderLoop = new PIDController(0.02, 0.0, 0.0, encoder, encoderPID);
   //Global Varable for CameraValues
@@ -100,10 +111,14 @@ public class Robot extends IterativeRobot {
     rearLeft.setInverted(false);
     frontRight.setInverted(true);
     m_robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
+
+    //Setup Encoders
+    testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel, false, Encoder.EncodingType.k4X);
+    testCoder.setDistancePerPulse((Math.PI * 8) / 360);     
+
     rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
-  
     //Seting Camera value Ranges and Setpoints
-    strafeLoop.setSetpoint(0.0);
+    strafeLoop.setSetpoint(3.6);
     strafeLoop.setOutputRange(-1,1);
     strafeLoop.setInputRange(-25.0, 25.0);
     
@@ -111,7 +126,7 @@ public class Robot extends IterativeRobot {
     visionLoop.setOutputRange(-1,1);
     visionLoop.setInputRange(-25.0, 25.0);
     
-    forwardLoop.setSetpoint(8.0);
+    forwardLoop.setSetpoint(6.4);
     forwardLoop.setOutputRange(-0.5,0.5);
     forwardLoop.setInputRange(-25.0, 25.0); 
 
@@ -144,8 +159,34 @@ public class Robot extends IterativeRobot {
           Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
           outputStream.putFrame(output);
       }).start();*/
-    }
 
+      /*new Thread(() -> {
+        Timer frameTimer = new Timer();
+        frameTimer.start();
+        preTime = frameTimer.get();
+        UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+        camera.setVideoMode(VideoMode.PixelFormat.kMJPEG , 320, 240, 30);
+        //camera.setResolution(320, 240);
+        //camera.setFPS(30);
+        
+        CvSink cvSink = CameraServer.getInstance().getVideo();
+        CvSource outputStream = CameraServer.getInstance().putVideo("Blur", 200, 200);
+        
+        Mat source = new Mat();
+        Mat output = new Mat();
+        
+        while(!Thread.interrupted()) {
+            double currentTime = frameTimer.get();
+            double diffTime = currentTime - preTime;
+            SmartDashboard.putNumber("FPSTimer", (1/diffTime));
+            preTime = currentTime;
+            cvSink.grabFrame(source);
+            Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+            outputStream.putFrame(output);
+        }
+    }).start();*/
+
+    }
   @Override
   public void teleopPeriodic() {
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
@@ -159,7 +200,9 @@ public class Robot extends IterativeRobot {
     if (ButtonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
-    
+
+    SmartDashboard.putNumber("Encoder Distance:" , testCoder.getDistance());   
+    SmartDashboard.putNumber("Encoder Value:" , testCoder.get());  
     
     // Use the joystick X axis for lateral movement, Y axis for forward
     // movement, and Z axis for rotation.
@@ -179,7 +222,7 @@ public class Robot extends IterativeRobot {
     
     if (skew > -45){
       actualSkew = Math.abs(skew);
-    }else {
+    } else {
       actualSkew = Math.abs(skew) - 90;
     }
     StrafeValue = actualSkew;
@@ -189,7 +232,6 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
-    
 
 
     rightTrigger = controller.getRawAxis(3);
@@ -219,7 +261,6 @@ public class Robot extends IterativeRobot {
     }
     
 
-
     //Controlling PID Loops 
     if (ButtonA){
       visionLoop.enable();
@@ -236,12 +277,44 @@ public class Robot extends IterativeRobot {
       encoderLoop.disable();
       m_robotDrive.driveCartesian(JoyX, -JoyY, -JoyZ, 0.0);
     }
-    if (ButtonX){
-      Leds.sendCode(2);
-    } else{
-      Leds.sendCode(1);
-      
+
+
+    //Checking if reflective tape area is less and change LED lights
+
+    if(y < 4)
+    {
+      //Lower Hatches
+      if(area >= 4.0 && x > -4 && x < 4)
+      {
+        Leds.sendCode(1);
+      }  
+      else
+      {
+        Leds.sendCode(2);
+      }
     }
+    else if(y > 4)
+    {
+      //Ball Hatches
+      if(area >= 2.5 && x > -3.5 && x < 3.5)
+      {
+        Leds.sendCode(1);
+      }
+      else
+      {
+        Leds.sendCode(2);
+      }
+    }
+    else 
+    {
+      Leds.sendCode(2);
+    }
+
+
+    if (JoyB){
+      Leds.sendCode(9);
+    }
+
     if (ButtonRight){
       solenoid.set(true);
     }  else{
