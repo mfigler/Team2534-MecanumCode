@@ -5,10 +5,10 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 public class RobotMap extends IterativeRobot {
 
 //drive train    
-public static int talonFrontRightChannel = 1;
-public static int talonRearRightChannel = 2;
-public static int talonFrontLeftChannel = 3;
-public static int talonRearLeftChannel = 4;
+public static int talonFrontRightChannel = 4;
+public static int talonRearRightChannel = 3;
+public static int talonFrontLeftChannel = 2;
+public static int talonRearLeftChannel = 1;
 
 //Controller
 public static int xBoxControllerChannel = 0;
