@@ -42,11 +42,16 @@ import edu.wpi.cscore.VideoSource;
 
 public class Robot extends IterativeRobot {
 
+  
   MecanumDrive robotDrive;
-  WPI_TalonSRX frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
-  WPI_TalonSRX rearLeft = new WPI_TalonSRX(RobotMap.talonRearLeftChannel);
-  WPI_TalonSRX frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
-  WPI_TalonSRX rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
+  WPI_TalonSRX frontLeft;
+  WPI_TalonSRX rearLeft;
+  WPI_TalonSRX frontRight;
+  WPI_TalonSRX rearRight;
+  // Old Robot: 0
+  // New Robot: 1
+  int robotMode = 1;
+
   Encoder testCoder;
   double motorSpeed = 0.7;
 
@@ -104,10 +109,36 @@ public class Robot extends IterativeRobot {
   @Override
   public void robotInit() {
     //Setup Drive Train
-    frontLeft.setInverted(false);
-    rearLeft.setInverted(true);
-    frontRight.setInverted(false);
-    rearRight.setInverted(true);
+
+    if (robotMode == 0){
+      RobotMap.talonFrontRightChannel = 4;
+      RobotMap.talonFrontRightReverse = false;
+      RobotMap.talonRearRightChannel = 3;
+      RobotMap.talonRearRightReverse = false;
+      RobotMap.talonFrontLeftChannel = 2;
+      RobotMap.talonFrontLeftReverse = false;
+      RobotMap.talonRearLeftChannel = 1;
+      RobotMap.talonRearLeftReverse = false;
+    }else{
+      RobotMap.talonFrontRightChannel = 4;
+      RobotMap.talonFrontRightReverse = true;
+      RobotMap.talonRearRightChannel = 3;
+      RobotMap.talonRearRightReverse = false;
+      RobotMap.talonFrontLeftChannel = 2;
+      RobotMap.talonFrontLeftReverse = true;
+      RobotMap.talonRearLeftChannel = 1;
+      RobotMap.talonRearLeftReverse = true;
+    }
+   
+    frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
+    rearLeft = new WPI_TalonSRX(RobotMap.talonRearLeftChannel);
+    frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
+    rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
+    frontLeft.setInverted(RobotMap.talonFrontLeftReverse);
+    rearLeft.setInverted(RobotMap.talonRearLeftReverse);
+    frontRight.setInverted(RobotMap.talonFrontRightReverse);
+    rearRight.setInverted(RobotMap.talonRearRightReverse);
+    
     robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     
     //Start Compressor
