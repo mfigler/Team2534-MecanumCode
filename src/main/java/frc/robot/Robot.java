@@ -48,33 +48,43 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX rearLeft;
   WPI_TalonSRX frontRight;
   WPI_TalonSRX rearRight;
+  WPI_TalonSRX elevator;
   // Old Robot: 0
   // New Robot: 1
   int robotMode = 1;
 
-  Encoder testCoder;
+  Encoder elevatorEncoder;
   double motorSpeed = 0.7;
 
+  //Driver Controller Setup
   double deadzone = 0.15;
-  double joyY = 0;
-  double joyX = 0;
-  double joyZ = 0;
-  double rightTrigger = 0;
-  boolean buttonA;
-  boolean buttonB;
-  boolean buttonX;
-  boolean buttonY;
-  boolean buttonRight;
-  boolean buttonLeft;
+  double driverJoyY = 0;
+  double driverJoyX = 0;
+  double driverJoyZ = 0;
+  double driverRightTrigger = 0;
+  boolean driverButtonA;
+  boolean driverButtonB;
+  boolean driverButtonX;
+  boolean driverButtonY;
+  boolean driverButtonRight;
+  boolean driverButtonLeft;
+
+  //Manipulator Controller Setup
+  double manipulatorJoyY = 0;
+
+  boolean switchValue;
   double target = 0.5;
   double correctSpeed = 0.2;
-  XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
+  XboxController driver = new XboxController(RobotMap.xBoxDriverChannel);
+  XboxController manipulator = new XboxController(RobotMap.xBoxManipulatorChannel);
   int frames = 30;
   double currentData;
   public double preTime = 0.0; 
   int ledCode = 1;
   DoubleSolenoid doubleSolenoid = new DoubleSolenoid(RobotMap.doubleSolenoidForwardChannel, RobotMap.doubleSolenoidReverseChannel);
   Compressor compressor = new Compressor();
+  DigitalInput limitSwitch = new DigitalInput(RobotMap.limitSwitchChannel);
+  double elevatorMax = 10;//set later
 
  
   //instantiate output of PIDout
@@ -119,6 +129,8 @@ public class Robot extends IterativeRobot {
       RobotMap.talonFrontLeftReverse = false;
       RobotMap.talonRearLeftChannel = 1;
       RobotMap.talonRearLeftReverse = false;
+      RobotMap.talonElevatorChannel = 5;
+      RobotMap.talonElevatorReverse = false;
     }else{
       RobotMap.talonFrontRightChannel = 4;
       RobotMap.talonFrontRightReverse = true;
@@ -128,12 +140,15 @@ public class Robot extends IterativeRobot {
       RobotMap.talonFrontLeftReverse = true;
       RobotMap.talonRearLeftChannel = 1;
       RobotMap.talonRearLeftReverse = true;
+      RobotMap.talonElevatorChannel = 5;
+      RobotMap.talonElevatorReverse = false;
     }
    
     frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
     rearLeft = new WPI_TalonSRX(RobotMap.talonRearLeftChannel);
     frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
     rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
+    elevator = new WPI_TalonSRX(RobotMap.talonElevatorChannel);
     frontLeft.setInverted(RobotMap.talonFrontLeftReverse);
     rearLeft.setInverted(RobotMap.talonRearLeftReverse);
     frontRight.setInverted(RobotMap.talonFrontRightReverse);
@@ -145,8 +160,8 @@ public class Robot extends IterativeRobot {
     //compressor.start();
 
     //Setup Encoders
-    testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel, false, Encoder.EncodingType.k4X);
-    testCoder.setDistancePerPulse((Math.PI * 8) / 360);     
+    elevatorEncoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel, false, Encoder.EncodingType.k4X);
+    elevatorEncoder.setDistancePerPulse((Math.PI * 8) / 360);     
 
 //    rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
     //Seting Camera value Ranges and Setpoints
@@ -229,12 +244,12 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("Rotations", rotations);
     SmartDashboard.putNumber("Encoder Value", encoderValue);
     SmartDashboard.putNumber("Distance", distance);
-    if (buttonX) {
+    if (driverButtonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
 
-    SmartDashboard.putNumber("Encoder Distance:" , testCoder.getDistance());   
-    SmartDashboard.putNumber("Encoder Value:" , testCoder.get());  
+    SmartDashboard.putNumber("Encoder Distance:" , elevatorEncoder.getDistance());   
+    SmartDashboard.putNumber("Encoder Value:" , elevatorEncoder.get());  
     
     // Use the joystick X axis for lateral movement, Y axis for forward
     // movement, and Z axis for rotation.
@@ -265,43 +280,47 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightArea", area);
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
 
+    //Driver Controller
+    driverRightTrigger = driver.getRawAxis(RobotMap.xBoxRightTriggerChannel);
+    driverButtonA = driver.getRawButton(RobotMap.xBoxButtonAChannel);
+    driverButtonB = driver.getRawButton(RobotMap.xBoxButtonBChannel);
+    driverButtonX = driver.getRawButton(RobotMap.xBoxButtonXChannel);
+    driverButtonRight = driver.getRawButton(RobotMap.xBoxButtonRightChannel);
+    driverJoyY = driver.getRawAxis(RobotMap.xBoxLeftStickYChannel);
+    driverJoyX = driver.getRawAxis(RobotMap.xBoxLeftStickXChannel);
+    driverJoyZ = driver.getRawAxis(RobotMap.xBoxRightStickXChannel);
 
-    rightTrigger = controller.getRawAxis(RobotMap.xBoxRightTriggerChannel);
-    buttonA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
-    buttonB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
-    buttonX = controller.getRawButton(RobotMap.xBoxButtonXChannel);
-    buttonRight = controller.getRawButton(RobotMap.xBoxButtonRightChannel);
-    joyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
-    joyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
-    joyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
+    //Manipulator Controller
+    manipulatorJoyY = manipulator.getRawAxis(RobotMap.xBoxLeftStickYChannel);
 
 
     //Read Values on Smartdashboard
-    SmartDashboard.putNumber("JoyX", joyX);
-    SmartDashboard.putNumber("JoyY x number", joyY*motorSpeed);
-    SmartDashboard.putNumber("JoyY", joyY);
-    SmartDashboard.putNumber("JoyZ", joyZ);
+    SmartDashboard.putNumber("JoyX", driverJoyX);
+    SmartDashboard.putNumber("JoyY x number", driverJoyY*motorSpeed);
+    SmartDashboard.putNumber("JoyY", driverJoyY);
+    SmartDashboard.putNumber("JoyZ", driverJoyZ);
     SmartDashboard.putNumber("timer", ledCode);
+    SmartDashboard.putBoolean("Limit Switch", switchValue);
     
     //Deadzone
-    if (Math.abs(joyY) < (deadzone)) {
-      joyY = 0;
+    if (Math.abs(driverJoyY) < (deadzone)) {
+      driverJoyY = 0;
     }
-    if (Math.abs(joyX) < (deadzone)) {
-      joyX = 0;
+    if (Math.abs(driverJoyX) < (deadzone)) {
+      driverJoyX = 0;
     }
-    if (Math.abs(joyZ) < (deadzone)) {
-      joyZ = 0;
+    if (Math.abs(driverJoyZ) < (deadzone)) {
+      driverJoyZ = 0;
     }
     
 
     //Controlling PID Loops 
-    if (buttonA){
+    if (driverButtonA){
       visionLoop.enable();
       strafeLoop.enable();
       forwardLoop.enable();
       robotDrive.driveCartesian(-strafeOutput.outputX, -forwardOutput.outputY, output.outputSkew, 0.0);
-    } else if (rightTrigger > 0.6){
+    } else if (driverRightTrigger > 0.6){
       encoderLoop.enable();
       robotDrive.driveCartesian(-0.0, encoderPID.outputEncoder, 0.0, 0.0);
     }else{
@@ -309,7 +328,7 @@ public class Robot extends IterativeRobot {
       strafeLoop.disable();
       forwardLoop.disable();
       encoderLoop.disable();
-      robotDrive.driveCartesian(-joyX * motorSpeed, joyY * motorSpeed, -joyZ * motorSpeed, 0.0);
+      robotDrive.driveCartesian(-driverJoyX * motorSpeed, driverJoyY * motorSpeed, -driverJoyZ * motorSpeed, 0.0);
     }
 
     //Checking if reflective tape area is less and change LED lights
@@ -343,15 +362,35 @@ public class Robot extends IterativeRobot {
     }
 
 
-    if (buttonB){
+    if (driverButtonB){
       Leds.sendCode(9);
     }
 
-    if (buttonRight){
+    if (driverButtonRight){
       doubleSolenoid.set(Value.kForward);
     }  else{
       doubleSolenoid.set(Value.kReverse);
     }
+    if (limitSwitch.get()){
+      elevatorEncoder.reset();
+    }
+    if (distance < elevatorMax){
+      elevator.set(manipulatorJoyY);
+    }  else if(distance <= 0){
+      if(manipulatorJoyY < 0){
+        elevator.set(0);
+      }  else{
+        elevator.set(manipulatorJoyY);
+      }
+    }
+    else{
+      if(manipulatorJoyY > 0){
+        elevator.set(0);
+      }  else{
+        elevator.set(manipulatorJoyY);
+      }
+    }
+
   }  
   
   public void testPeriodic(){
