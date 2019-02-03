@@ -4,11 +4,19 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 
 public class RobotMap extends IterativeRobot {
 
-//drive train    
-public static int talonFrontRightChannel = 1;
-public static int talonRearRightChannel = 2;
-public static int talonFrontLeftChannel = 3;
-public static int talonRearLeftChannel = 4;
+//drive train
+public static int talonFrontRightChannel;
+public static boolean talonFrontRightReverse;
+public static int talonRearRightChannel;
+public static boolean talonRearRightReverse;
+public static int talonFrontLeftChannel;
+public static boolean talonFrontLeftReverse;
+public static int talonRearLeftChannel;
+public static boolean talonRearLeftReverse;
+
+
+
+
 
 //Controller
 public static int xBoxControllerChannel = 0;
