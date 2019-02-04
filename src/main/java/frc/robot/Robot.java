@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.SolenoidBase;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.AnalogInput;
 
 // import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 // import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
@@ -53,7 +54,6 @@ public class Robot extends IterativeRobot {
   int robotMode = 1;
 
   Encoder testCoder;
-  double motorSpeed = 0.7;
 
   double deadzone = 0.15;
   double joyY = 0;
@@ -75,8 +75,10 @@ public class Robot extends IterativeRobot {
   int ledCode = 1;
   DoubleSolenoid doubleSolenoid = new DoubleSolenoid(RobotMap.doubleSolenoidForwardChannel, RobotMap.doubleSolenoidReverseChannel);
   Compressor compressor = new Compressor();
-
- 
+  
+  //Pressure Sensor 
+  AnalogInput PressureSensor = new AnalogInput(1);
+  double PSVolt;  
   //instantiate output of PIDout
   PIDout output = new PIDout(this); 
   PIDoutX strafeOutput = new PIDoutX(this);
@@ -120,13 +122,13 @@ public class Robot extends IterativeRobot {
       RobotMap.talonRearLeftChannel = 1;
       RobotMap.talonRearLeftReverse = false;
     }else{
-      RobotMap.talonFrontRightChannel = 4;
-      RobotMap.talonFrontRightReverse = true;
-      RobotMap.talonRearRightChannel = 3;
-      RobotMap.talonRearRightReverse = false;
-      RobotMap.talonFrontLeftChannel = 2;
+      RobotMap.talonFrontRightChannel = 2;
+      RobotMap.talonFrontRightReverse = false;
+      RobotMap.talonRearRightChannel = 4;
+      RobotMap.talonRearRightReverse = true;
+      RobotMap.talonFrontLeftChannel = 1;
       RobotMap.talonFrontLeftReverse = true;
-      RobotMap.talonRearLeftChannel = 1;
+      RobotMap.talonRearLeftChannel = 3;
       RobotMap.talonRearLeftReverse = true;
     }
    
@@ -251,7 +253,11 @@ public class Robot extends IterativeRobot {
     double skew = ts.getDouble(0.0);
     CameraValue = x;
     ForwardValue = area;
-    
+
+    //Pressure Sensor Voltage to Pressure converstion
+    PSVolt = PressureSensor.getVoltage();
+    double PSPress = ((250*(PSVolt/5)) - 25);
+
     if (skew > -45){
       actualSkew = Math.abs(skew);
     } else {
@@ -264,6 +270,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
+    SmartDashboard.putNumber("PressureSensPress", PSPress);
 
 
     rightTrigger = controller.getRawAxis(RobotMap.xBoxRightTriggerChannel);
@@ -278,7 +285,6 @@ public class Robot extends IterativeRobot {
 
     //Read Values on Smartdashboard
     SmartDashboard.putNumber("JoyX", joyX);
-    SmartDashboard.putNumber("JoyY x number", joyY*motorSpeed);
     SmartDashboard.putNumber("JoyY", joyY);
     SmartDashboard.putNumber("JoyZ", joyZ);
     SmartDashboard.putNumber("timer", ledCode);
@@ -309,7 +315,7 @@ public class Robot extends IterativeRobot {
       strafeLoop.disable();
       forwardLoop.disable();
       encoderLoop.disable();
-      robotDrive.driveCartesian(-joyX * motorSpeed, joyY * motorSpeed, -joyZ * motorSpeed, 0.0);
+      robotDrive.driveCartesian(-joyX , joyY , -joyZ , 0.0);
     }
 
     //Checking if reflective tape area is less and change LED lights
@@ -344,7 +350,8 @@ public class Robot extends IterativeRobot {
 
 
     if (buttonB){
-      Leds.sendCode(9);
+      Leds.sendCode(8);
+      System.out.println("B press");
     }
 
     if (buttonRight){
@@ -352,8 +359,12 @@ public class Robot extends IterativeRobot {
     }  else{
       doubleSolenoid.set(Value.kReverse);
     }
-  }  
   
+    
+  
+  }  
+
+
   public void testPeriodic(){
   /*Proper Code On Robot
   Ping Talons(Drive Base, Arms)
