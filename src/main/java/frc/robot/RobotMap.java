@@ -28,6 +28,7 @@ public static int xBoxLeftStickYChannel = 1;
 public static int xBoxLeftTriggerChannel = 2;
 public static int xBoxRightTriggerChannel = 3;
 public static int xBoxRightStickXChannel = 4;
+public static int xBoxRightStickYChannel = 5;
 
 //Encoder
 public static int encoderAChannel = 0;
@@ -41,4 +42,7 @@ public static int doubleSolenoidReverseChannel = 1;
 public static int talonElevatorChannel = 5;
 public static boolean talonElevatorReverse;
 public static int limitSwitchChannel = 0;
+
+//infrared
+public static int infraredSensorChannel = 0;
 }
