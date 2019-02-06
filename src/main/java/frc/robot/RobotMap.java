@@ -20,6 +20,7 @@ public static boolean talonRearLeftReverse;
 
 //Controller
 public static int xBoxControllerChannel = 0;
+public static int xBoxManipulatorControllerChannel = 1;
 public static int xBoxButtonAChannel = 1;
 public static int xBoxButtonBChannel = 2;
 public static int xBoxButtonXChannel = 3;
@@ -37,6 +38,14 @@ public static int encoderAChannel = 0;
 public static int encoderBChannel = 1;
 
 //Solenoid
-public static int doubleSolenoidForwardChannel = 0;
-public static int doubleSolenoidReverseChannel = 1;
+public static int hingeSolenoidForwardChannel = 0;
+public static int hingeSolenoidReverseChannel = 1;
+public static int hatchSolenoidForwardChannel = 2;
+public static int hatchSolenoidReverseChannel = 3;
+
+//Ball Intake
+public static int talonBallIntakeChannel = 5;
+
+//Elevator
+public static int talonElevatorChannel = 6;
 }

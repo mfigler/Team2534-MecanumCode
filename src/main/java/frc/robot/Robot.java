@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import com.ctre.phoenix.motorcontrol.can.*;
+import com.ctre.phoenix.motorcontrol.IMotorController;
 import edu.wpi.first.wpilibj.*;
 //import edu.wpi.first.wpilibj.SensorBase;
 //import edu.wpi.first.wpilibj.PWM;
@@ -49,6 +50,8 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX rearLeft;
   WPI_TalonSRX frontRight;
   WPI_TalonSRX rearRight;
+  WPI_TalonSRX ballIntake;
+  WPI_TalonSRX elevator;
   // Old Robot: 0
   // New Robot: 1
   int robotMode = 1;
@@ -57,28 +60,37 @@ public class Robot extends IterativeRobot {
 
   double deadzone = 0.15;
   double joyY = 0;
+  double m_JoyY = 0;
   double joyX = 0;
   double joyZ = 0;
   double rightTrigger = 0;
   boolean buttonA;
+  boolean m_ButtonA;
   boolean buttonB;
+  boolean m_ButtonB;
   boolean buttonX;
+  boolean m_ButtonX;
   boolean buttonY;
   boolean buttonRight;
+  boolean m_ButtonRight;
   boolean buttonLeft;
+  boolean m_ButtonLeft;
   double target = 0.5;
   double correctSpeed = 0.2;
   XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
+  XboxController manipulator = new XboxController(RobotMap.xBoxManipulatorControllerChannel);
   int frames = 30;
   double currentData;
   public double preTime = 0.0; 
   int ledCode = 1;
-  DoubleSolenoid doubleSolenoid = new DoubleSolenoid(RobotMap.doubleSolenoidForwardChannel, RobotMap.doubleSolenoidReverseChannel);
+  DoubleSolenoid hingeSolenoid = new DoubleSolenoid(RobotMap.hingeSolenoidForwardChannel, RobotMap.hingeSolenoidReverseChannel);
+  DoubleSolenoid hatchSolenoid = new DoubleSolenoid(RobotMap.hatchSolenoidForwardChannel, RobotMap.hatchSolenoidReverseChannel);
   Compressor compressor = new Compressor();
   
   //Pressure Sensor 
   AnalogInput PressureSensor = new AnalogInput(1);
   double PSVolt;  
+
   //instantiate output of PIDout
   PIDout output = new PIDout(this); 
   PIDoutX strafeOutput = new PIDoutX(this);
@@ -136,6 +148,8 @@ public class Robot extends IterativeRobot {
     rearLeft = new WPI_TalonSRX(RobotMap.talonRearLeftChannel);
     frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
     rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
+    ballIntake = new WPI_TalonSRX(RobotMap.talonBallIntakeChannel);
+    elevator = new WPI_TalonSRX(RobotMap.talonElevatorChannel);
     frontLeft.setInverted(RobotMap.talonFrontLeftReverse);
     rearLeft.setInverted(RobotMap.talonRearLeftReverse);
     frontRight.setInverted(RobotMap.talonFrontRightReverse);
@@ -150,7 +164,7 @@ public class Robot extends IterativeRobot {
     testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel, false, Encoder.EncodingType.k4X);
     testCoder.setDistancePerPulse((Math.PI * 8) / 360);     
 
-//    rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
+    //rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
     //Seting Camera value Ranges and Setpoints
     strafeLoop.setSetpoint(0.0);
     strafeLoop.setOutputRange(-1,1);
@@ -167,58 +181,6 @@ public class Robot extends IterativeRobot {
     encoderLoop.setSetpoint(24.0); //distance
     encoderLoop.setOutputRange(-0.5,0.5); //max speed
     encoderLoop.setInputRange(-25.0, 25.0); //the minimum or maximum percentage to write to the output
-
-    /*new Thread(() -> {
-        
-      UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
-      
-      camera.setVideoMode(VideoMode.PixelFormat.kMJPEG, 360, 320, frames);
-
-      CvSink cvSink = CameraServer.getInstance().getVideo();
-      CvSource outputStream = CameraServer.getInstance().putVideo("Blur", 480, 320);
-
-      Mat source = new Mat();
-      Mat output = new Mat();
-      
-      while(!Thread.interrupted()) {
-          cvSink.grabFrame(source);
-          currentData = camera.getActualDataRate();
-          if (currentData > 3.5 && frames > 8){
-            frames = frames - 2;
-            camera.setVideoMode(VideoMode.PixelFormat.kMJPEG, 360, 320, frames);
-          }else if (currentData < 1.5 && frames < 30){
-            frames = frames + 2;
-            camera.setVideoMode(VideoMode.PixelFormat.kMJPEG, 360, 320, frames);
-          }
-          Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
-          outputStream.putFrame(output);
-      }).start();*/
-
-      /*new Thread(() -> {
-        Timer frameTimer = new Timer();
-        frameTimer.start();
-        preTime = frameTimer.get();
-        UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
-        camera.setVideoMode(VideoMode.PixelFormat.kMJPEG , 320, 240, 30);
-        //camera.setResolution(320, 240);
-        //camera.setFPS(30);
-        
-        CvSink cvSink = CameraServer.getInstance().getVideo();
-        CvSource outputStream = CameraServer.getInstance().putVideo("Blur", 200, 200);
-        
-        Mat source = new Mat();
-        Mat output = new Mat();
-        
-        while(!Thread.interrupted()) {
-            double currentTime = frameTimer.get();
-            double diffTime = currentTime - preTime;
-            SmartDashboard.putNumber("FPSTimer", (1/diffTime));
-            preTime = currentTime;
-            cvSink.grabFrame(source);
-            Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
-            outputStream.putFrame(output);
-        }
-    }).start();*/
 
     }
   @Override
@@ -275,13 +237,19 @@ public class Robot extends IterativeRobot {
 
     rightTrigger = controller.getRawAxis(RobotMap.xBoxRightTriggerChannel);
     buttonA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
+    m_ButtonA = manipulator.getRawButton(RobotMap.xBoxButtonAChannel);
     buttonB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
+    m_ButtonB = manipulator.getRawButton(RobotMap.xBoxButtonBChannel);
     buttonX = controller.getRawButton(RobotMap.xBoxButtonXChannel);
+    m_ButtonX = manipulator.getRawButton(RobotMap.xBoxButtonXChannel);
     buttonRight = controller.getRawButton(RobotMap.xBoxButtonRightChannel);
+    m_ButtonRight = manipulator.getRawButton(RobotMap.xBoxButtonRightChannel);
+    m_ButtonLeft = manipulator.getRawButton(RobotMap.xBoxButtonLeftChannel);
     joyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
+    m_JoyY = manipulator.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     joyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
     joyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
-
+    
 
     //Read Values on Smartdashboard
     SmartDashboard.putNumber("JoyX", joyX);
@@ -354,16 +322,26 @@ public class Robot extends IterativeRobot {
       System.out.println("B press");
     }
 
-    if (buttonRight){
-      doubleSolenoid.set(Value.kForward);
-    }  else{
-      doubleSolenoid.set(Value.kReverse);
-    }
-  
-    
-  
-  }  
 
+    //Ball Intake State Machine
+    if (m_ButtonA){
+    hingeSolenoid.set(Value.kReverse);
+    ballIntake.set(0.4);
+      if(ballIntake.getSelectedSensorPosition() >= 10){
+      ballIntake.set(0);
+      hingeSolenoid.set(Value.kReverse);
+      }
+    } else{
+    ballIntake.set(0);
+    hingeSolenoid.set(Value.kForward);
+    }
+    if (buttonB){
+    hatchSolenoid.set(Value.kReverse);
+  }else{
+    hatchSolenoid.set(Value.kForward);
+  }
+ elevator.set(m_JoyY);
+}
 
   public void testPeriodic(){
   /*Proper Code On Robot
