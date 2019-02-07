@@ -52,18 +52,25 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX rearRight;
   WPI_TalonSRX ballIntake;
   WPI_TalonSRX elevator;
+  WPI_TalonSRX m_Climb;
+  WPI_TalonSRX s_Climb;
+  WPI_TalonSRX d_Climb;
+  WPI_TalonSRX drive_Climb;
   // Old Robot: 0
   // New Robot: 1
-  int robotMode = 1;
+  int robotMode = 0;
 
-  Encoder testCoder;
+  //Encoder testCoder;
 
   double deadzone = 0.15;
   double joyY = 0;
   double m_JoyY = 0;
   double joyX = 0;
   double joyZ = 0;
+  double m_JoyX2 = 0;
+  double m_JoyY2 = 0;
   double rightTrigger = 0;
+  double m_RightTrigger = 0;
   boolean buttonA;
   boolean m_ButtonA;
   boolean buttonB;
@@ -86,6 +93,8 @@ public class Robot extends IterativeRobot {
   DoubleSolenoid hingeSolenoid = new DoubleSolenoid(RobotMap.hingeSolenoidForwardChannel, RobotMap.hingeSolenoidReverseChannel);
   DoubleSolenoid hatchSolenoid = new DoubleSolenoid(RobotMap.hatchSolenoidForwardChannel, RobotMap.hatchSolenoidReverseChannel);
   Compressor compressor = new Compressor();
+  DigitalInput topLimitSwitch = new DigitalInput(0);
+  DigitalInput bottomLimitSwitch = new DigitalInput(1);
   
   //Pressure Sensor 
   AnalogInput PressureSensor = new AnalogInput(1);
@@ -128,11 +137,11 @@ public class Robot extends IterativeRobot {
       RobotMap.talonFrontRightChannel = 4;
       RobotMap.talonFrontRightReverse = false;
       RobotMap.talonRearRightChannel = 3;
-      RobotMap.talonRearRightReverse = false;
+      RobotMap.talonRearRightReverse = true;
       RobotMap.talonFrontLeftChannel = 2;
       RobotMap.talonFrontLeftReverse = false;
       RobotMap.talonRearLeftChannel = 1;
-      RobotMap.talonRearLeftReverse = false;
+      RobotMap.talonRearLeftReverse = true;
     }else{
       RobotMap.talonFrontRightChannel = 2;
       RobotMap.talonFrontRightReverse = false;
@@ -150,6 +159,10 @@ public class Robot extends IterativeRobot {
     rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
     ballIntake = new WPI_TalonSRX(RobotMap.talonBallIntakeChannel);
     elevator = new WPI_TalonSRX(RobotMap.talonElevatorChannel);
+    m_Climb = new WPI_TalonSRX(7);
+    s_Climb = new WPI_TalonSRX(8);
+    d_Climb = new WPI_TalonSRX(9);
+    s_Climb.follow(m_Climb);
     frontLeft.setInverted(RobotMap.talonFrontLeftReverse);
     rearLeft.setInverted(RobotMap.talonRearLeftReverse);
     frontRight.setInverted(RobotMap.talonFrontRightReverse);
@@ -161,8 +174,8 @@ public class Robot extends IterativeRobot {
     //compressor.start();
 
     //Setup Encoders
-    testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel, false, Encoder.EncodingType.k4X);
-    testCoder.setDistancePerPulse((Math.PI * 8) / 360);     
+    //testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel, false, Encoder.EncodingType.k4X);
+    //testCoder.setDistancePerPulse((Math.PI * 8) / 360);     
 
     //rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
     //Seting Camera value Ranges and Setpoints
@@ -197,8 +210,8 @@ public class Robot extends IterativeRobot {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
 
-    SmartDashboard.putNumber("Encoder Distance:" , testCoder.getDistance());   
-    SmartDashboard.putNumber("Encoder Value:" , testCoder.get());  
+    //SmartDashboard.putNumber("Encoder Distance:" , testCoder.getDistance());   
+    //SmartDashboard.putNumber("Encoder Value:" , testCoder.get());  
     
     // Use the joystick X axis for lateral movement, Y axis for forward
     // movement, and Z axis for rotation.
@@ -236,6 +249,7 @@ public class Robot extends IterativeRobot {
 
 
     rightTrigger = controller.getRawAxis(RobotMap.xBoxRightTriggerChannel);
+    m_RightTrigger = manipulator.getRawAxis(RobotMap.xBoxRightTriggerChannel);
     buttonA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
     m_ButtonA = manipulator.getRawButton(RobotMap.xBoxButtonAChannel);
     buttonB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
@@ -249,6 +263,8 @@ public class Robot extends IterativeRobot {
     m_JoyY = manipulator.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     joyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
     joyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
+    m_JoyX2 = manipulator.getRawAxis(RobotMap.xBoxRightStickXChannel);
+    m_JoyY2 = manipulator.getRawAxis(RobotMap.xBoxRightStickYChannel);
     
 
     //Read Values on Smartdashboard
@@ -322,7 +338,7 @@ public class Robot extends IterativeRobot {
       System.out.println("B press");
     }
 
-
+/*
     //Ball Intake State Machine
     if (m_ButtonA){
     hingeSolenoid.set(Value.kReverse);
@@ -335,12 +351,23 @@ public class Robot extends IterativeRobot {
     ballIntake.set(0);
     hingeSolenoid.set(Value.kForward);
     }
-    if (buttonB){
+    
+    if (m_ButtonB){
     hatchSolenoid.set(Value.kReverse);
   }else{
     hatchSolenoid.set(Value.kForward);
   }
- elevator.set(m_JoyY);
+    if(topLimitSwitch.get() && m_JoyY > 0){
+    elevator.set(0);
+  } else if(bottomLimitSwitch.get() && m_JoyY < 0){
+   elevator.set(0);
+  } else{
+    elevator.set(m_JoyY);
+  }
+  m_Climb.set(m_JoyY2);
+  d_Climb.set(m_JoyX2);
+  drive_Climb.set(m_RightTrigger);
+*/
 }
 
   public void testPeriodic(){
