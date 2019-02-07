@@ -371,7 +371,9 @@ public class Robot extends IterativeRobot {
 }
 
   public void testPeriodic(){
-  /*Proper Code On Robot
+  /*
+  Things to do before match:
+  Proper Code On Robot
   Ping Talons(Drive Base, Arms)
   Limelight Sees Vision Targets
   Vision Camera Sends Feed
