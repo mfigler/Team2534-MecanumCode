@@ -46,9 +46,13 @@ public static int hatchSolenoidReverseChannel = 3;
 public static int elevatorSolenoidForwardChannel = 4;
 public static int elevatorSolenoidReverseChannel = 5;
 
-//Ball Intake
+//Ball and Elevator
 public static int talonBallIntakeChannel = 5;
-
-//Elevator
 public static int talonElevatorChannel = 6;
+
+//Endgame
+public static int talonClimbAChannel = 7;
+public static int talonClimbBChannel = 8;
+public static int talonClimbCChannel = 9;
+public static int talonClimbDriveChannel = 10;
 }

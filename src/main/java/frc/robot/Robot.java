@@ -78,6 +78,7 @@ public class Robot extends IterativeRobot {
   boolean buttonX;
   boolean m_ButtonX;
   boolean buttonY;
+  boolean m_ButtonY;
   boolean buttonRight;
   boolean m_ButtonRight;
   boolean buttonLeft;
@@ -88,7 +89,6 @@ public class Robot extends IterativeRobot {
   XboxController manipulator = new XboxController(RobotMap.xBoxManipulatorControllerChannel);
   int frames = 30;
   double currentData;
-  public double preTime = 0.0; 
   int ledCode = 1;
   DoubleSolenoid hingeSolenoid = new DoubleSolenoid(RobotMap.hingeSolenoidForwardChannel, RobotMap.hingeSolenoidReverseChannel);
   DoubleSolenoid hatchSolenoid = new DoubleSolenoid(RobotMap.hatchSolenoidForwardChannel, RobotMap.hatchSolenoidReverseChannel);
@@ -98,6 +98,12 @@ public class Robot extends IterativeRobot {
   DigitalInput bottomLimitSwitch = new DigitalInput(1);
   AnalogInput infrared = new AnalogInput(0);
   double voltage = 0;
+
+  //Timers
+  Timer timer = new Timer();
+  Timer timerSystem = new Timer();
+  double db_prevTime = 0.0;
+  //double irDistance = 0;
   
   //Pressure Sensor 
   AnalogInput PressureSensor = new AnalogInput(1);
@@ -134,6 +140,13 @@ public class Robot extends IterativeRobot {
 
   @Override
   public void robotInit() {
+    // Setup timers
+    timer.reset();
+    timerSystem.reset();
+    timerSystem.start();
+    db_prevTime = timerSystem.get();
+
+
     //Setup Drive Train
 
     if (robotMode == 0){
@@ -155,21 +168,27 @@ public class Robot extends IterativeRobot {
       RobotMap.talonRearLeftChannel = 3;
       RobotMap.talonRearLeftReverse = true;
     }
-   
+    //Drive Train
     frontLeft = new WPI_TalonSRX(RobotMap.talonFrontLeftChannel);
     rearLeft = new WPI_TalonSRX(RobotMap.talonRearLeftChannel);
     frontRight = new WPI_TalonSRX(RobotMap.talonFrontRightChannel);
     rearRight = new WPI_TalonSRX(RobotMap.talonRearRightChannel);
-    ballIntake = new WPI_TalonSRX(RobotMap.talonBallIntakeChannel);
-    elevator = new WPI_TalonSRX(RobotMap.talonElevatorChannel);
-    m_Climb = new WPI_TalonSRX(7);
-    s_Climb = new WPI_TalonSRX(8);
-    d_Climb = new WPI_TalonSRX(9);
-    s_Climb.follow(m_Climb);
     frontLeft.setInverted(RobotMap.talonFrontLeftReverse);
     rearLeft.setInverted(RobotMap.talonRearLeftReverse);
     frontRight.setInverted(RobotMap.talonFrontRightReverse);
     rearRight.setInverted(RobotMap.talonRearRightReverse);
+    
+    //Ball and Elevator
+    ballIntake = new WPI_TalonSRX(RobotMap.talonBallIntakeChannel);
+    elevator = new WPI_TalonSRX(RobotMap.talonElevatorChannel);
+    
+    //Endgame
+    m_Climb = new WPI_TalonSRX(RobotMap.talonClimbAChannel);
+    s_Climb = new WPI_TalonSRX(RobotMap.talonClimbBChannel);
+    d_Climb = new WPI_TalonSRX(RobotMap.talonClimbCChannel);
+    drive_Climb = new WPI_TalonSRX(RobotMap.talonClimbDriveChannel);
+    s_Climb.follow(m_Climb);
+    
     
     robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     
@@ -201,8 +220,15 @@ public class Robot extends IterativeRobot {
     }
   @Override
   public void teleopPeriodic() {
+    // display system speed
+    double db_currentTime = timerSystem.get();
+    double db_deltaTime = db_currentTime - db_prevTime;
+    db_prevTime = db_currentTime;
+
+
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
-    voltage = infrared.getVoltage();
+    voltage = infrared.getAverageVoltage();
+    //irDistance = 4800/(voltage - 20);
     encoderValue = -rearRight.getSelectedSensorPosition(0);
     rotations = encoderValue/4000;
     circumfrence = Math.PI*8;
@@ -277,6 +303,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("JoyY", joyY);
     SmartDashboard.putNumber("JoyZ", joyZ);
     SmartDashboard.putNumber("timer", ledCode);
+    SmartDashboard.putNumber("Delta Time",1/db_deltaTime);
     
     //Deadzone
     if (Math.abs(joyY) < (deadzone)) {
@@ -304,7 +331,7 @@ public class Robot extends IterativeRobot {
       strafeLoop.disable();
       forwardLoop.disable();
       encoderLoop.disable();
-      robotDrive.driveCartesian(0.0 /*was -joyX*/ , 1.0 /*was joyY*/, 0.0 /*was -joyZ */, 0.0);
+      robotDrive.driveCartesian(-joyX ,joyY,-joyZ , 0.0);
     }
 
     //Checking if reflective tape area is less and change LED lights
@@ -345,15 +372,19 @@ public class Robot extends IterativeRobot {
 
 
     //Ball Intake State Machine
-    if (m_ButtonA){
+    if (m_ButtonRight){
     Leds.sendCode(10);
     hingeSolenoid.set(Value.kReverse);
-    ballIntake.set(0.4);
-      if(ballIntake.getSelectedSensorPosition() >= 10){
+    ballIntake.set(0.7);
+      if(ballIntake.getSelectedSensorPosition() >= 3){
+      timer.delay(1);
       ballIntake.set(0);
       Leds.sendCode(2);
       hingeSolenoid.set(Value.kReverse);
       }
+    } else if (m_ButtonLeft){
+      hingeSolenoid.set(Value.kForward);
+      ballIntake.set(0.5);
     } else{
     ballIntake.set(0);
     Leds.sendCode(2); 
@@ -379,7 +410,7 @@ public class Robot extends IterativeRobot {
   }
   m_Climb.set(m_JoyY2);
   d_Climb.set(m_JoyX2);
-//  drive_Climb.set(m_JoyY);
+  drive_Climb.set(m_JoyY);
 }
 
   public void testPeriodic(){
