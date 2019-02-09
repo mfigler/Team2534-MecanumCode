@@ -43,6 +43,8 @@ public static int hingeSolenoidForwardChannel = 0;
 public static int hingeSolenoidReverseChannel = 1;
 public static int hatchSolenoidForwardChannel = 2;
 public static int hatchSolenoidReverseChannel = 3;
+public static int elevatorSolenoidForwardChannel = 4;
+public static int elevatorSolenoidReverseChannel = 5;
 
 //Ball Intake
 public static int talonBallIntakeChannel = 5;

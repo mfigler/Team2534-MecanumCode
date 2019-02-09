@@ -92,9 +92,12 @@ public class Robot extends IterativeRobot {
   int ledCode = 1;
   DoubleSolenoid hingeSolenoid = new DoubleSolenoid(RobotMap.hingeSolenoidForwardChannel, RobotMap.hingeSolenoidReverseChannel);
   DoubleSolenoid hatchSolenoid = new DoubleSolenoid(RobotMap.hatchSolenoidForwardChannel, RobotMap.hatchSolenoidReverseChannel);
+  DoubleSolenoid elevatorSolenoid = new DoubleSolenoid(RobotMap.elevatorSolenoidForwardChannel, RobotMap.elevatorSolenoidReverseChannel);
   Compressor compressor = new Compressor();
   DigitalInput topLimitSwitch = new DigitalInput(0);
   DigitalInput bottomLimitSwitch = new DigitalInput(1);
+  AnalogInput infrared = new AnalogInput(0);
+  double voltage = 0;
   
   //Pressure Sensor 
   AnalogInput PressureSensor = new AnalogInput(1);
@@ -199,6 +202,7 @@ public class Robot extends IterativeRobot {
   @Override
   public void teleopPeriodic() {
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
+    voltage = infrared.getVoltage();
     encoderValue = -rearRight.getSelectedSensorPosition(0);
     rotations = encoderValue/4000;
     circumfrence = Math.PI*8;
@@ -206,6 +210,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("Rotations", rotations);
     SmartDashboard.putNumber("Encoder Value", encoderValue);
     SmartDashboard.putNumber("Distance", distance);
+    SmartDashboard.putNumber("Voltage", voltage);
     if (buttonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
@@ -299,7 +304,7 @@ public class Robot extends IterativeRobot {
       strafeLoop.disable();
       forwardLoop.disable();
       encoderLoop.disable();
-      robotDrive.driveCartesian(-joyX , joyY , -joyZ , 0.0);
+      robotDrive.driveCartesian(0.0 /*was -joyX*/ , 1.0 /*was joyY*/, 0.0 /*was -joyZ */, 0.0);
     }
 
     //Checking if reflective tape area is less and change LED lights
@@ -338,17 +343,20 @@ public class Robot extends IterativeRobot {
       System.out.println("B press");
     }
 
-/*
+
     //Ball Intake State Machine
     if (m_ButtonA){
+    Leds.sendCode(10);
     hingeSolenoid.set(Value.kReverse);
     ballIntake.set(0.4);
       if(ballIntake.getSelectedSensorPosition() >= 10){
       ballIntake.set(0);
+      Leds.sendCode(2);
       hingeSolenoid.set(Value.kReverse);
       }
     } else{
     ballIntake.set(0);
+    Leds.sendCode(2); 
     hingeSolenoid.set(Value.kForward);
     }
     
@@ -357,17 +365,21 @@ public class Robot extends IterativeRobot {
   }else{
     hatchSolenoid.set(Value.kForward);
   }
-    if(topLimitSwitch.get() && m_JoyY > 0){
+    /*if(topLimitSwitch.get() && m_JoyY > 0){
     elevator.set(0);
   } else if(bottomLimitSwitch.get() && m_JoyY < 0){
    elevator.set(0);
   } else{
     elevator.set(m_JoyY);
+  }*/
+  if (m_ButtonX){
+    elevatorSolenoid.set(Value.kForward);
+  } else{
+    elevatorSolenoid.set(Value.kReverse);
   }
   m_Climb.set(m_JoyY2);
   d_Climb.set(m_JoyX2);
-  drive_Climb.set(m_RightTrigger);
-*/
+//  drive_Climb.set(m_JoyY);
 }
 
   public void testPeriodic(){
