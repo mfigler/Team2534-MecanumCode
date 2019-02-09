@@ -103,6 +103,7 @@ public class Robot extends IterativeRobot {
   Timer timer = new Timer();
   Timer timerSystem = new Timer();
   double db_prevTime = 0.0;
+  SampleSmoother timerSmoother = new SampleSmoother(200);
   //double irDistance = 0;
   
   //Pressure Sensor 
@@ -224,6 +225,7 @@ public class Robot extends IterativeRobot {
     double db_currentTime = timerSystem.get();
     double db_deltaTime = db_currentTime - db_prevTime;
     db_prevTime = db_currentTime;
+    timerSmoother.addSample(db_deltaTime);
 
 
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
@@ -304,6 +306,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("JoyZ", joyZ);
     SmartDashboard.putNumber("timer", ledCode);
     SmartDashboard.putNumber("Delta Time",1/db_deltaTime);
+    SmartDashboard.putNumber("Smooth Time", 1/timerSmoother.getAverage());
     
     //Deadzone
     if (Math.abs(joyY) < (deadzone)) {
