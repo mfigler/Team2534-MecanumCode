@@ -93,9 +93,9 @@ public class Robot extends IterativeRobot {
   DoubleSolenoid hatchSolenoid = new DoubleSolenoid(RobotMap.hatchSolenoidForwardChannel, RobotMap.hatchSolenoidReverseChannel);
   DoubleSolenoid elevatorSolenoid = new DoubleSolenoid(RobotMap.elevatorSolenoidForwardChannel, RobotMap.elevatorSolenoidReverseChannel);
   Compressor compressor = new Compressor();
-  DigitalInput topLimitSwitch = new DigitalInput(0);
-  DigitalInput bottomLimitSwitch = new DigitalInput(1);
-  AnalogInput infrared = new AnalogInput(0);
+  //DigitalInput topLimitSwitch = new DigitalInput(0);
+  //DigitalInput bottomLimitSwitch = new DigitalInput(1);
+  //AnalogInput infrared = new AnalogInput(0);
   double voltage = 0;
 
   //Timers
@@ -112,7 +112,7 @@ public class Robot extends IterativeRobot {
   double PSVolt;  
 
   //instantiate output of PIDout
-  PIDout output = new PIDout(this); 
+  PIDout outputSkew = new PIDout(this); 
   PIDoutX strafeOutput = new PIDoutX(this);
   PIDoutY forwardOutput = new PIDoutY(this);
   EncoderPID encoderPID = new EncoderPID(this);
@@ -123,7 +123,7 @@ public class Robot extends IterativeRobot {
   EncoderSource encoder = new EncoderSource(this);
 
   //Set PIDs
-  PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, output);
+  PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, outputSkew);
   PIDController strafeLoop = new PIDController(0.1, 0.0, 0.0, limelightX, strafeOutput);
   PIDController forwardLoop = new PIDController(0.04, 0.0, 0.0, limelightY, forwardOutput);
   PIDController encoderLoop = new PIDController(0.02, 0.0, 0.0, encoder, encoderPID);
@@ -230,7 +230,7 @@ public class Robot extends IterativeRobot {
 
 
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
-    voltage = infrared.getAverageVoltage();
+    //voltage = infrared.getAverageVoltage();
     //irDistance = 4800/(voltage - 20);
     encoderValue = -rearRight.getSelectedSensorPosition(0);
     rotations = encoderValue/4000;
@@ -326,7 +326,7 @@ public class Robot extends IterativeRobot {
       visionLoop.enable();
       strafeLoop.enable();
       forwardLoop.enable();
-      robotDrive.driveCartesian(-strafeOutput.outputX, -forwardOutput.outputY, output.outputSkew, 0.0);
+      robotDrive.driveCartesian(-strafeOutput.outputX, -forwardOutput.outputY, outputSkew.output, 0.0);
     } else if (db_cntlDriverTriggerRight > 0.6){
       encoderLoop.enable();
       robotDrive.driveCartesian(-0.0, encoderPID.outputEncoder, 0.0, 0.0);
