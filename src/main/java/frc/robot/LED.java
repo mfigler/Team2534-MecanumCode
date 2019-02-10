@@ -10,8 +10,8 @@ public class LED
         this.arduinoBus = new I2C(I2C.Port.kOnboard, 8);
     }
     
-    public boolean sendCode(int LEDCode){
-        this.arduinoBus.write(0, LEDCode);
+    public boolean sendCode(int n_ledColorCode){
+        this.arduinoBus.write(0, n_ledColorCode);
         return true;
     }
     

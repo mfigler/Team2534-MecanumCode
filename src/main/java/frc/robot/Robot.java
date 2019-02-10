@@ -51,7 +51,6 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX frontRight;
   WPI_TalonSRX rearRight;
   WPI_TalonSRX ballIntake;
-  WPI_TalonSRX elevator;
   WPI_TalonSRX m_Climb;
   WPI_TalonSRX s_Climb;
   WPI_TalonSRX d_Climb;
@@ -62,34 +61,34 @@ public class Robot extends IterativeRobot {
 
   //Encoder testCoder;
 
-  double deadzone = 0.15;
-  double joyY = 0;
-  double m_JoyY = 0;
-  double joyX = 0;
-  double joyZ = 0;
-  double m_JoyX2 = 0;
-  double m_JoyY2 = 0;
-  double rightTrigger = 0;
-  double m_RightTrigger = 0;
-  boolean buttonA;
-  boolean m_ButtonA;
-  boolean buttonB;
-  boolean m_ButtonB;
-  boolean buttonX;
-  boolean m_ButtonX;
-  boolean buttonY;
-  boolean m_ButtonY;
-  boolean buttonRight;
-  boolean m_ButtonRight;
-  boolean buttonLeft;
-  boolean m_ButtonLeft;
-  double target = 0.5;
-  double correctSpeed = 0.2;
-  XboxController controller = new XboxController(RobotMap.xBoxControllerChannel);
-  XboxController manipulator = new XboxController(RobotMap.xBoxManipulatorControllerChannel);
-  int frames = 30;
-  double currentData;
-  int ledCode = 1;
+  double db_joyDeadzone = 0.15;
+  double db_cntlDriverJoyLeftY = 0;
+  double db_cntlManipJoyLeftY = 0;
+  double db_cntlDriverJoyLeftX = 0;
+  double db_cntlDriverJoyRightX = 0;
+  double db_cntlManipJoyRightX = 0;
+  double db_cntlManipJoyRightY = 0;
+  double db_cntlDriverTriggerRight = 0;
+  double db_cntlManipTriggerRight = 0;
+  boolean b_cntlDriverButtonA;
+  boolean b_cntlManipButtonA;
+  boolean b_cntlDriverButtonB;
+  boolean b_cntlManipButtonB;
+  boolean b_cntlDriverButtonX;
+  boolean b_cntlManipButtonX;
+  boolean b_cntlDriverButtonY;
+  boolean b_cntlManipButtonY;
+  boolean b_cntlDriverButtonRight;
+  boolean b_cntlManipButtonRight;
+  boolean b_cntlDriverButtonLeft;
+  boolean b_cntlManipButtonLeft;
+  //double target = 0.5;
+  //double correctSpeed = 0.2;
+  XboxController cntlDriver = new XboxController(RobotMap.xBoxControllerChannel);
+  XboxController cntlManipulator = new XboxController(RobotMap.xBoxManipulatorControllerChannel);
+  //int frames = 30;
+  //double currentData;
+  int n_ledColorCode = 1;
   DoubleSolenoid hingeSolenoid = new DoubleSolenoid(RobotMap.hingeSolenoidForwardChannel, RobotMap.hingeSolenoidReverseChannel);
   DoubleSolenoid hatchSolenoid = new DoubleSolenoid(RobotMap.hatchSolenoidForwardChannel, RobotMap.hatchSolenoidReverseChannel);
   DoubleSolenoid elevatorSolenoid = new DoubleSolenoid(RobotMap.elevatorSolenoidForwardChannel, RobotMap.elevatorSolenoidReverseChannel);
@@ -103,6 +102,8 @@ public class Robot extends IterativeRobot {
   Timer timer = new Timer();
   Timer timerSystem = new Timer();
   double db_prevTime = 0.0;
+  double db_endTime = 0.0;
+  boolean b_ballIntake = false;
   SampleSmoother timerSmoother = new SampleSmoother(200);
   //double irDistance = 0;
   
@@ -181,7 +182,6 @@ public class Robot extends IterativeRobot {
     
     //Ball and Elevator
     ballIntake = new WPI_TalonSRX(RobotMap.talonBallIntakeChannel);
-    elevator = new WPI_TalonSRX(RobotMap.talonElevatorChannel);
     
     //Endgame
     m_Climb = new WPI_TalonSRX(RobotMap.talonClimbAChannel);
@@ -228,6 +228,7 @@ public class Robot extends IterativeRobot {
     timerSmoother.addSample(db_deltaTime);
 
 
+
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
     voltage = infrared.getAverageVoltage();
     //irDistance = 4800/(voltage - 20);
@@ -239,7 +240,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("Encoder Value", encoderValue);
     SmartDashboard.putNumber("Distance", distance);
     SmartDashboard.putNumber("Voltage", voltage);
-    if (buttonX) {
+    if (b_cntlDriverButtonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
 
@@ -281,52 +282,52 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("PressureSensPress", PSPress);
 
 
-    rightTrigger = controller.getRawAxis(RobotMap.xBoxRightTriggerChannel);
-    m_RightTrigger = manipulator.getRawAxis(RobotMap.xBoxRightTriggerChannel);
-    buttonA = controller.getRawButton(RobotMap.xBoxButtonAChannel);
-    m_ButtonA = manipulator.getRawButton(RobotMap.xBoxButtonAChannel);
-    buttonB = controller.getRawButton(RobotMap.xBoxButtonBChannel);
-    m_ButtonB = manipulator.getRawButton(RobotMap.xBoxButtonBChannel);
-    buttonX = controller.getRawButton(RobotMap.xBoxButtonXChannel);
-    m_ButtonX = manipulator.getRawButton(RobotMap.xBoxButtonXChannel);
-    buttonRight = controller.getRawButton(RobotMap.xBoxButtonRightChannel);
-    m_ButtonRight = manipulator.getRawButton(RobotMap.xBoxButtonRightChannel);
-    m_ButtonLeft = manipulator.getRawButton(RobotMap.xBoxButtonLeftChannel);
-    joyY = controller.getRawAxis(RobotMap.xBoxLeftStickYChannel);
-    m_JoyY = manipulator.getRawAxis(RobotMap.xBoxLeftStickYChannel);
-    joyX = controller.getRawAxis(RobotMap.xBoxLeftStickXChannel);
-    joyZ = controller.getRawAxis(RobotMap.xBoxRightStickXChannel);
-    m_JoyX2 = manipulator.getRawAxis(RobotMap.xBoxRightStickXChannel);
-    m_JoyY2 = manipulator.getRawAxis(RobotMap.xBoxRightStickYChannel);
+    db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxdb_cntlDriverTriggerRightChannel);
+    db_cntlManipTriggerRight = cntlManipulator.getRawAxis(RobotMap.xBoxdb_cntlDriverTriggerRightChannel);
+    b_cntlDriverButtonA = cntlDriver.getRawButton(RobotMap.xBoxButtonAChannel);
+    b_cntlManipButtonA = cntlManipulator.getRawButton(RobotMap.xBoxButtonAChannel);
+    b_cntlDriverButtonB = cntlDriver.getRawButton(RobotMap.xBoxButtonBChannel);
+    b_cntlManipButtonB = cntlManipulator.getRawButton(RobotMap.xBoxButtonBChannel);
+    b_cntlDriverButtonX = cntlDriver.getRawButton(RobotMap.xBoxButtonXChannel);
+    b_cntlManipButtonX = cntlManipulator.getRawButton(RobotMap.xBoxButtonXChannel);
+    b_cntlDriverButtonRight = cntlDriver.getRawButton(RobotMap.xBoxButtonRightChannel);
+    b_cntlManipButtonRight = cntlManipulator.getRawButton(RobotMap.xBoxButtonRightChannel);
+    b_cntlManipButtonLeft = cntlManipulator.getRawButton(RobotMap.xBoxButtonLeftChannel);
+    db_cntlDriverJoyLeftY = cntlDriver.getRawAxis(RobotMap.xBoxLeftStickYChannel);
+    db_cntlManipJoyLeftY = cntlManipulator.getRawAxis(RobotMap.xBoxLeftStickYChannel);
+    db_cntlDriverJoyLeftX = cntlDriver.getRawAxis(RobotMap.xBoxLeftStickXChannel);
+    db_cntlDriverJoyRightX = cntlDriver.getRawAxis(RobotMap.xBoxRightStickXChannel);
+    db_cntlManipJoyRightX = cntlManipulator.getRawAxis(RobotMap.xBoxRightStickXChannel);
+    db_cntlManipJoyRightY = cntlManipulator.getRawAxis(RobotMap.xBoxRightStickYChannel);
     
 
     //Read Values on Smartdashboard
-    SmartDashboard.putNumber("JoyX", joyX);
-    SmartDashboard.putNumber("JoyY", joyY);
-    SmartDashboard.putNumber("JoyZ", joyZ);
-    SmartDashboard.putNumber("timer", ledCode);
+    SmartDashboard.putNumber("db_cntlDriverJoyLeftX", db_cntlDriverJoyLeftX);
+    SmartDashboard.putNumber("db_cntlDriverJoyLeftY", db_cntlDriverJoyLeftY);
+    SmartDashboard.putNumber("db_cntlDriverJoyRightX", db_cntlDriverJoyRightX);
+    SmartDashboard.putNumber("timer", n_ledColorCode);
     SmartDashboard.putNumber("Delta Time",1/db_deltaTime);
     SmartDashboard.putNumber("Smooth Time", 1/timerSmoother.getAverage());
     
-    //Deadzone
-    if (Math.abs(joyY) < (deadzone)) {
-      joyY = 0;
+    //db_joyDeadzone
+    if (Math.abs(db_cntlDriverJoyLeftY) < (db_joyDeadzone)) {
+      db_cntlDriverJoyLeftY = 0;
     }
-    if (Math.abs(joyX) < (deadzone)) {
-      joyX = 0;
+    if (Math.abs(db_cntlDriverJoyLeftX) < (db_joyDeadzone)) {
+      db_cntlDriverJoyLeftX = 0;
     }
-    if (Math.abs(joyZ) < (deadzone)) {
-      joyZ = 0;
+    if (Math.abs(db_cntlDriverJoyRightX) < (db_joyDeadzone)) {
+      db_cntlDriverJoyRightX = 0;
     }
     
 
     //Controlling PID Loops 
-    if (buttonA){
+    if (b_cntlDriverButtonA){
       visionLoop.enable();
       strafeLoop.enable();
       forwardLoop.enable();
       robotDrive.driveCartesian(-strafeOutput.outputX, -forwardOutput.outputY, output.outputSkew, 0.0);
-    } else if (rightTrigger > 0.6){
+    } else if (db_cntlDriverTriggerRight > 0.6){
       encoderLoop.enable();
       robotDrive.driveCartesian(-0.0, encoderPID.outputEncoder, 0.0, 0.0);
     }else{
@@ -334,7 +335,7 @@ public class Robot extends IterativeRobot {
       strafeLoop.disable();
       forwardLoop.disable();
       encoderLoop.disable();
-      robotDrive.driveCartesian(-joyX ,joyY,-joyZ , 0.0);
+      robotDrive.driveCartesian(-db_cntlDriverJoyLeftX ,db_cntlDriverJoyLeftY,-db_cntlDriverJoyRightX , 0.0);
     }
 
     //Checking if reflective tape area is less and change LED lights
@@ -368,52 +369,58 @@ public class Robot extends IterativeRobot {
     }
 
 
-    if (buttonB){
+    if (b_cntlDriverButtonB){
       Leds.sendCode(8);
       System.out.println("B press");
     }
 
 
     //Ball Intake State Machine
-    if (m_ButtonRight){
-    Leds.sendCode(10);
-    hingeSolenoid.set(Value.kReverse);
-    ballIntake.set(0.7);
-      if(ballIntake.getSelectedSensorPosition() >= 3){
-      timer.delay(1);
-      ballIntake.set(0);
-      Leds.sendCode(2);
+    if (b_cntlManipButtonRight){
+      Leds.sendCode(10);
       hingeSolenoid.set(Value.kReverse);
+      ballIntake.set(0.7);
+      db_currentTime = timer.get();
+      if(ballIntake.getSelectedSensorPosition() >= 3 && b_ballIntake == false){
+        db_endTime = db_currentTime + 1;
+        b_ballIntake = true;
       }
-    } else if (m_ButtonLeft){
+      if (db_currentTime >= db_endTime){
+        ballIntake.set(0);
+        Leds.sendCode(2);
+        hingeSolenoid.set(Value.kReverse);
+        b_ballIntake = false;
+      }
+    } else if (b_cntlManipButtonLeft){
       hingeSolenoid.set(Value.kForward);
       ballIntake.set(0.5);
     } else{
-    ballIntake.set(0);
-    Leds.sendCode(2); 
-    hingeSolenoid.set(Value.kForward);
+      ballIntake.set(0);
+      Leds.sendCode(2); 
+      hingeSolenoid.set(Value.kForward);
+      b_ballIntake = false;
     }
     
-    if (m_ButtonB){
-    hatchSolenoid.set(Value.kReverse);
-  }else{
-    hatchSolenoid.set(Value.kForward);
-  }
-    /*if(topLimitSwitch.get() && m_JoyY > 0){
+    if (b_cntlManipButtonB){
+      hatchSolenoid.set(Value.kReverse);
+    }  else{
+      hatchSolenoid.set(Value.kForward);
+    }
+    /*if(topLimitSwitch.get() && db_cntlManipJoyLeftY > 0){
     elevator.set(0);
-  } else if(bottomLimitSwitch.get() && m_JoyY < 0){
+  } else if(bottomLimitSwitch.get() && db_cntlManipJoyLeftY < 0){
    elevator.set(0);
   } else{
-    elevator.set(m_JoyY);
+    elevator.set(db_cntlManipJoyLeftY);
   }*/
-  if (m_ButtonX){
+  if (b_cntlManipButtonX){
     elevatorSolenoid.set(Value.kForward);
   } else{
     elevatorSolenoid.set(Value.kReverse);
   }
-  m_Climb.set(m_JoyY2);
-  d_Climb.set(m_JoyX2);
-  drive_Climb.set(m_JoyY);
+  m_Climb.set(db_cntlManipJoyRightY);
+  d_Climb.set(db_cntlManipJoyRightX);
+  drive_Climb.set(db_cntlManipJoyLeftY);
 }
 
   public void testPeriodic(){

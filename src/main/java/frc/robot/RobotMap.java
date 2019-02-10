@@ -30,7 +30,7 @@ public static int xBoxButtonRightChannel = 6;
 public static int xBoxLeftStickXChannel = 0;
 public static int xBoxLeftStickYChannel = 1;
 public static int xBoxLeftTriggerChannel = 2;
-public static int xBoxRightTriggerChannel = 3;
+public static int xBoxdb_cntlDriverTriggerRightChannel = 3;
 public static int xBoxRightStickXChannel = 4;
 public static int xBoxRightStickYChannel = 5;
 
@@ -48,11 +48,10 @@ public static int elevatorSolenoidReverseChannel = 5;
 
 //Ball and Elevator
 public static int talonBallIntakeChannel = 5;
-public static int talonElevatorChannel = 6;
 
 //Endgame
-public static int talonClimbAChannel = 7;
-public static int talonClimbBChannel = 8;
-public static int talonClimbCChannel = 9;
-public static int talonClimbDriveChannel = 10;
+public static int talonClimbAChannel = 6;
+public static int talonClimbBChannel = 7;
+public static int talonClimbCChannel = 8;
+public static int talonClimbDriveChannel = 9;
 }

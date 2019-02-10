@@ -24,7 +24,7 @@ public class PIDout implements PIDOutput{
     }
     public void pidWrite(double output){
     outputSkew = output;
-    //robot.m_robotDrive.driveCartesian(robot.JoyX, robot.JoyY,output, 0.0);  
+    //robot.m_robotDrive.driveCartesian(robot.db_cntlDriverJoyLeftX, robot.db_cntlDriverJoyLeftY,output, 0.0);  
       
     }
 }
