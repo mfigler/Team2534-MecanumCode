@@ -97,6 +97,7 @@ public class Robot extends IterativeRobot {
   //DigitalInput bottomLimitSwitch = new DigitalInput(1);
   //AnalogInput infrared = new AnalogInput(0);
   double voltage = 0;
+  double encoderValue = 0;
 
   //Timers
   Timer timer = new Timer();
@@ -188,6 +189,8 @@ public class Robot extends IterativeRobot {
     s_Climb = new WPI_TalonSRX(RobotMap.talonClimbBChannel);
     d_Climb = new WPI_TalonSRX(RobotMap.talonClimbCChannel);
     drive_Climb = new WPI_TalonSRX(RobotMap.talonClimbDriveChannel);
+    s_Climb.setInverted(true);
+    d_Climb.setInverted(true);
     s_Climb.follow(m_Climb);
     
     
@@ -233,12 +236,12 @@ public class Robot extends IterativeRobot {
     //voltage = infrared.getAverageVoltage();
     //irDistance = 4800/(voltage - 20);
     encoderValue = -rearRight.getSelectedSensorPosition(0);
-    rotations = encoderValue/4000;
-    circumfrence = Math.PI*8;
-    distance = circumfrence * rotations;
-    SmartDashboard.putNumber("Rotations", rotations);
+    //rotations = encoderValue/4000;
+    //circumfrence = Math.PI*8;
+    //distance = circumfrence * rotations;
+    //SmartDashboard.putNumber("Rotations", rotations);
     SmartDashboard.putNumber("Encoder Value", encoderValue);
-    SmartDashboard.putNumber("Distance", distance);
+    //SmartDashboard.putNumber("Distance", distance);
     SmartDashboard.putNumber("Voltage", voltage);
     if (b_cntlDriverButtonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
@@ -402,9 +405,9 @@ public class Robot extends IterativeRobot {
     }
     
     if (b_cntlManipButtonB){
-      hatchSolenoid.set(Value.kReverse);
-    }  else{
       hatchSolenoid.set(Value.kForward);
+    }  else{
+      hatchSolenoid.set(Value.kReverse);
     }
     /*if(topLimitSwitch.get() && db_cntlManipJoyLeftY > 0){
     elevator.set(0);
@@ -418,9 +421,9 @@ public class Robot extends IterativeRobot {
   } else{
     elevatorSolenoid.set(Value.kReverse);
   }
-  m_Climb.set(db_cntlManipJoyRightY);
-  d_Climb.set(db_cntlManipJoyRightX);
-  drive_Climb.set(db_cntlManipJoyLeftY);
+  m_Climb.set(db_cntlManipJoyRightY *.25);
+  d_Climb.set(db_cntlManipJoyLeftY * .25);
+  drive_Climb.set(db_cntlManipJoyRightX *.25);
 }
 
   public void testPeriodic(){
