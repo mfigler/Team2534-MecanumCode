@@ -97,7 +97,7 @@ public class Robot extends IterativeRobot {
   //DigitalInput bottomLimitSwitch = new DigitalInput(1);
   //AnalogInput infrared = new AnalogInput(0);
   double voltage = 0;
-  double encoderValue = 0;
+  //double encoderValue = 0;
 
   //Timers
   Timer timer = new Timer();
@@ -108,6 +108,9 @@ public class Robot extends IterativeRobot {
   SampleSmoother timerSmoother = new SampleSmoother(200);
   //double irDistance = 0;
   
+  //New EndGame Class
+  EndGame endGame = new EndGame();
+
   //Pressure Sensor 
   AnalogInput PressureSensor = new AnalogInput(1);
   double PSVolt;  
@@ -196,6 +199,14 @@ public class Robot extends IterativeRobot {
     
     robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     
+    //Initialize EndGame Parameters
+    endGame.driveTrainFrontRight = frontRight;
+    endGame.driveTrainFrontLeft = frontLeft;
+    endGame.driveTrainRearRight = rearRight;
+    endGame.driveTrainRearLeft = rearLeft;
+    endGame.climberFrontMaster = m_Climb;
+    endGame.climberRear = d_Climb;
+    endGame.climberDrive = drive_Climb;
     //Start Compressor
     //compressor.start();
 
