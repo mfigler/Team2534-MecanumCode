@@ -5,7 +5,9 @@ import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import com.ctre.phoenix.motorcontrol.can.*;
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.IMotorController;
+import com.ctre.phoenix.motorcontrol.DemandType;
 import edu.wpi.first.wpilibj.*;
 //import edu.wpi.first.wpilibj.SensorBase;
 //import edu.wpi.first.wpilibj.PWM;
@@ -93,11 +95,24 @@ public class Robot extends IterativeRobot {
   DoubleSolenoid hatchSolenoid = new DoubleSolenoid(RobotMap.hatchSolenoidForwardChannel, RobotMap.hatchSolenoidReverseChannel);
   DoubleSolenoid elevatorSolenoid = new DoubleSolenoid(RobotMap.elevatorSolenoidForwardChannel, RobotMap.elevatorSolenoidReverseChannel);
   Compressor compressor = new Compressor();
-  //DigitalInput topLimitSwitch = new DigitalInput(0);
-  //DigitalInput bottomLimitSwitch = new DigitalInput(1);
+  DigitalInput topLimitSwitchFrontRight = new DigitalInput(0);
+  boolean limitTopFrontRight = false;
+  DigitalInput bottomLimitSwitchFrontRight = new DigitalInput(1);
+  boolean limitBottomFrontRight = false;
+  DigitalInput topLimitSwitchFrontLeft = new DigitalInput(2);
+  boolean limitTopFrontLeft = false;
+  DigitalInput bottomLimitSwitchFrontLeft = new DigitalInput(3);
+  boolean limitBottomFrontLeft = false;
+  DigitalInput topLimitSwitchRear = new DigitalInput(4);
+  boolean limitTopRear = false;
+  DigitalInput bottomLimitSwitchRear = new DigitalInput(5);
+  boolean limitBottomRear = false;
   //AnalogInput infrared = new AnalogInput(0);
   double voltage = 0;
   //double encoderValue = 0;
+  double powerFR = 0;
+  double powerFL = 0;
+  double powerR = 0;
 
   //Timers
   Timer timer = new Timer();
@@ -197,7 +212,7 @@ public class Robot extends IterativeRobot {
     s_Climb.follow(m_Climb);
     
     
-    robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
+   robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     
     //Initialize EndGame Parameters
     endGame.driveTrainFrontRight = frontRight;
@@ -207,6 +222,8 @@ public class Robot extends IterativeRobot {
     endGame.climberFrontMaster = m_Climb;
     endGame.climberRear = d_Climb;
     endGame.climberDrive = drive_Climb;
+
+    endGame.init();
     //Start Compressor
     //compressor.start();
 
@@ -240,6 +257,7 @@ public class Robot extends IterativeRobot {
     double db_deltaTime = db_currentTime - db_prevTime;
     db_prevTime = db_currentTime;
     timerSmoother.addSample(db_deltaTime);
+
 
 
 
@@ -287,13 +305,18 @@ public class Robot extends IterativeRobot {
       actualSkew = Math.abs(skew) - 90;
     }
     StrafeValue = actualSkew;
-
+    limitTopFrontRight = topLimitSwitchFrontRight.get();
+    powerFR = m_Climb.get();
+    powerFL = s_Climb.get();
+    powerR = d_Climb.get();
     //post to smart dashboard periodically
     SmartDashboard.putNumber("LimelightX", x);
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
     SmartDashboard.putNumber("PressureSensPress", PSPress);
+    SmartDashboard.putBoolean("Limit", limitTopFrontRight);
+    SmartDashboard.putNumber("Amps", powerFR);
 
 
     db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxdb_cntlDriverTriggerRightChannel);
@@ -335,7 +358,8 @@ public class Robot extends IterativeRobot {
     }
     
 
-    //Controlling PID Loops 
+    //Controlling PID Loops
+  
     if (b_cntlDriverButtonA){
       visionLoop.enable();
       strafeLoop.enable();
@@ -351,6 +375,7 @@ public class Robot extends IterativeRobot {
       encoderLoop.disable();
       robotDrive.driveCartesian(-db_cntlDriverJoyLeftX ,db_cntlDriverJoyLeftY,-db_cntlDriverJoyRightX , 0.0);
     }
+  
 
     //Checking if reflective tape area is less and change LED lights
     if(y < 4)
@@ -420,13 +445,24 @@ public class Robot extends IterativeRobot {
     }  else{
       hatchSolenoid.set(Value.kReverse);
     }
-    /*if(topLimitSwitch.get() && db_cntlManipJoyLeftY > 0){
-    elevator.set(0);
-  } else if(bottomLimitSwitch.get() && db_cntlManipJoyLeftY < 0){
-   elevator.set(0);
-  } else{
-    elevator.set(db_cntlManipJoyLeftY);
-  }*/
+  if(topLimitSwitchFrontRight.get() && powerFR > 0 ){
+    m_Climb.set(0);
+  } else if(bottomLimitSwitchFrontRight.get() && powerFR < 0){
+    m_Climb.set(0);
+  }
+  
+  if(topLimitSwitchFrontLeft.get() && powerFL > 0 ){
+    m_Climb.set(0);
+  } else if(bottomLimitSwitchFrontLeft.get() && powerFL < 0){
+    m_Climb.set(0);
+  }
+  
+  if(topLimitSwitchRear.get() && powerR > 0 ){
+    d_Climb.set(0);
+  } else if(bottomLimitSwitchRear.get() && powerR < 0){
+    d_Climb.set(0);
+  }
+  
   if (b_cntlManipButtonX){
     elevatorSolenoid.set(Value.kForward);
   } else{

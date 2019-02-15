@@ -6,6 +6,7 @@ import com.ctre.phoenix.motorcontrol.can.*;
 import com.ctre.phoenix.motorcontrol.IMotorController;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
+import com.ctre.phoenix.motorcontrol.DemandType;
 
 public class EndGame {
     public WPI_TalonSRX driveTrainFrontRight;
@@ -16,10 +17,14 @@ public class EndGame {
     public WPI_TalonSRX climberRear;
     public WPI_TalonSRX climberDrive;
     protected int state = 0;
-    SpeedControllerGroup driveTrain = new SpeedControllerGroup(driveTrainFrontRight, driveTrainRearRight, driveTrainFrontLeft, driveTrainRearLeft);
+    SpeedControllerGroup driveTrain;
 
     public EndGame(){
      state = 0; 
+    }
+
+    public void init(){
+        driveTrain = new SpeedControllerGroup(driveTrainFrontRight, driveTrainRearRight, driveTrainFrontLeft, driveTrainRearLeft);
     }
 
     public void go(boolean buttonA){
