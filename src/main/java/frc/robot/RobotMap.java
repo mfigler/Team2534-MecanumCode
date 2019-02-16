@@ -29,8 +29,8 @@ public static int xBoxButtonLeftChannel = 5;
 public static int xBoxButtonRightChannel = 6;
 public static int xBoxLeftStickXChannel = 0;
 public static int xBoxLeftStickYChannel = 1;
-public static int xBoxLeftTriggerChannel = 2;
-public static int xBoxdb_cntlDriverTriggerRightChannel = 3;
+public static int xBoxTriggerLeftChannel = 2;
+public static int xBoxTriggerRightChannel = 3;
 public static int xBoxRightStickXChannel = 4;
 public static int xBoxRightStickYChannel = 5;
 

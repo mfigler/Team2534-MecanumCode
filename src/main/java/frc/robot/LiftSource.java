@@ -11,21 +11,29 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.PIDSourceType;
-import edu.wpi.first.wpilibj.PIDOutput;
 
-
-
-public class PIDout implements PIDOutput{
+public class LiftSource implements PIDSource {
     Robot robot;
-    public double output;
+    boolean master;
 
-    public PIDout(Robot r){
+    public LiftSource(Robot r, boolean m){
         robot = r;
+        master = m;
     }
-    public void pidWrite(double output){
-        this.output = output;
-    //robot.m_robotDrive.driveCartesian(robot.db_cntlDriverJoyLeftX, robot.db_cntlDriverJoyLeftY,output, 0.0);  
-      
-    }
-}
 
+    public PIDSourceType getPIDSourceType(){
+        return PIDSourceType.kDisplacement;
+    }
+
+    public void setPIDSourceType(PIDSourceType pidSource) {
+
+    }
+
+    public double pidGet(){
+        if(master){
+            return robot.mLiftEncoder;
+        } else{
+            return robot.sLiftEncoder;
+        }     
+    } 
+}

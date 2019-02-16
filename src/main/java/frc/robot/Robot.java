@@ -72,6 +72,7 @@ public class Robot extends IterativeRobot {
   double db_cntlManipJoyRightY = 0;
   double db_cntlDriverTriggerRight = 0;
   double db_cntlManipTriggerRight = 0;
+  double  db_cntlManipTriggerLeft = 0;
   boolean b_cntlDriverButtonA;
   boolean b_cntlManipButtonA;
   boolean b_cntlDriverButtonB;
@@ -109,10 +110,10 @@ public class Robot extends IterativeRobot {
   boolean limitBottomRear = false;
   //AnalogInput infrared = new AnalogInput(0);
   double voltage = 0;
-  //double encoderValue = 0;
   double powerFR = 0;
   double powerFL = 0;
   double powerR = 0;
+  
 
   //Timers
   Timer timer = new Timer();
@@ -135,22 +136,33 @@ public class Robot extends IterativeRobot {
   PIDoutX strafeOutput = new PIDoutX(this);
   PIDoutY forwardOutput = new PIDoutY(this);
   EncoderPID encoderPID = new EncoderPID(this);
+  PIDout mLiftPID = new PIDout(this);
+  PIDout sLiftPID = new PIDout(this);
+
   //Ints. Class 
   CameraSource limelight = new CameraSource(this); 
   CameraSourceX limelightX = new CameraSourceX(this);
   CameraSourceY limelightY = new CameraSourceY(this);
   EncoderSource encoder = new EncoderSource(this);
+  LiftSource mLift = new LiftSource(this, true);
+  LiftSource sLift = new LiftSource(this, false);
 
   //Set PIDs
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, outputSkew);
   PIDController strafeLoop = new PIDController(0.1, 0.0, 0.0, limelightX, strafeOutput);
   PIDController forwardLoop = new PIDController(0.04, 0.0, 0.0, limelightY, forwardOutput);
   PIDController encoderLoop = new PIDController(0.02, 0.0, 0.0, encoder, encoderPID);
+  PIDController mLiftLoop = new PIDController(0.02, 0.0, 0.0, mLift , mLiftPID);
+  PIDController sLiftLoop = new PIDController(0.02, 0.0, 0.0, sLift , sLiftPID);
+
   //Global Varable for CameraValues
   public double CameraValue = 0;
   public double StrafeValue = 0;
   public double ForwardValue = 0;
   public double encoderValue = 0;
+  public double mLiftEncoder = 0;
+  public double sLiftEncoder = 0;
+  public double dLiftEncoder = 0;
   public double rotations = 0;
   public double circumfrence = 0;
   public double distance = 0;
@@ -249,6 +261,9 @@ public class Robot extends IterativeRobot {
     encoderLoop.setOutputRange(-0.5,0.5); //max speed
     encoderLoop.setInputRange(-25.0, 25.0); //the minimum or maximum percentage to write to the output
 
+    mLiftLoop.setOutputRange(-0.2, 0.2);
+    mLiftLoop.setInputRange(0.0, 30000.0);
+
     }
   @Override
   public void teleopPeriodic() {
@@ -259,22 +274,48 @@ public class Robot extends IterativeRobot {
     timerSmoother.addSample(db_deltaTime);
 
 
+    mLiftEncoder = m_Climb.getSelectedSensorPosition(0);
+    sLiftEncoder = s_Climb.getSelectedSensorPosition(0);
+    dLiftEncoder = d_Climb.getSelectedSensorPosition(0);
+
+    mLiftLoop.setSetpoint(dLiftEncoder);
+  
+    if (b_cntlManipButtonLeft) {
+      m_Climb.setSelectedSensorPosition(0);
+      s_Climb.setSelectedSensorPosition(0);
+      d_Climb.setSelectedSensorPosition(0);
+    }
+
+    if (db_cntlManipTriggerLeft > 0.3) {
+      mLiftLoop.enable();
+      d_Climb.set(0.2);
+      m_Climb.set(mLiftPID.output);
+    } else{
+      m_Climb.set(db_cntlManipJoyRightY *.25);
+      d_Climb.set(db_cntlManipJoyLeftY * .25);
+      drive_Climb.set(db_cntlManipJoyRightX *.25);
+    }
+
+    SmartDashboard.putNumber("Driver Encoder Value", dLiftEncoder);
+    SmartDashboard.putNumber("Master Encoder Value", mLiftEncoder);
+    SmartDashboard.putNumber("Slave Encoder Value", sLiftEncoder);
+
+
 
 
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
     //voltage = infrared.getAverageVoltage();
     //irDistance = 4800/(voltage - 20);
     encoderValue = -rearRight.getSelectedSensorPosition(0);
+ 
     //rotations = encoderValue/4000;
     //circumfrence = Math.PI*8;
     //distance = circumfrence * rotations;
     //SmartDashboard.putNumber("Rotations", rotations);
-    SmartDashboard.putNumber("Encoder Value", encoderValue);
+   
     //SmartDashboard.putNumber("Distance", distance);
     SmartDashboard.putNumber("Voltage", voltage);
-    if (b_cntlDriverButtonX) {
-        rearRight.setSelectedSensorPosition(0, 0, 0);
-    }
+
 
     //SmartDashboard.putNumber("Encoder Distance:" , testCoder.getDistance());   
     //SmartDashboard.putNumber("Encoder Value:" , testCoder.get());  
@@ -306,6 +347,11 @@ public class Robot extends IterativeRobot {
     }
     StrafeValue = actualSkew;
     limitTopFrontRight = topLimitSwitchFrontRight.get();
+    limitTopFrontLeft = topLimitSwitchFrontLeft.get();
+    limitTopRear = topLimitSwitchRear.get();
+    limitBottomFrontLeft = bottomLimitSwitchFrontLeft.get();
+    limitBottomFrontRight = bottomLimitSwitchFrontRight.get();
+    limitBottomRear = bottomLimitSwitchRear.get();
     powerFR = m_Climb.get();
     powerFL = s_Climb.get();
     powerR = d_Climb.get();
@@ -315,12 +361,18 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightArea", area);
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
     SmartDashboard.putNumber("PressureSensPress", PSPress);
-    SmartDashboard.putBoolean("Limit", limitTopFrontRight);
+    SmartDashboard.putBoolean("LimitTFR", limitTopFrontRight);
+    SmartDashboard.putBoolean("LimitTFL", limitTopFrontLeft);
+    SmartDashboard.putBoolean("LimitTR", limitTopRear);
+    SmartDashboard.putBoolean("LimitBFR", limitBottomFrontRight);
+    SmartDashboard.putBoolean("LimitBFL", limitBottomFrontLeft);
+    SmartDashboard.putBoolean("LimitBR", limitBottomRear);
     SmartDashboard.putNumber("Amps", powerFR);
 
 
-    db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxdb_cntlDriverTriggerRightChannel);
-    db_cntlManipTriggerRight = cntlManipulator.getRawAxis(RobotMap.xBoxdb_cntlDriverTriggerRightChannel);
+    db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxTriggerRightChannel);
+    db_cntlManipTriggerRight = cntlManipulator.getRawAxis(RobotMap.xBoxTriggerRightChannel);
+    db_cntlManipTriggerLeft = cntlManipulator.getRawAxis(RobotMap.xBoxTriggerLeftChannel);
     b_cntlDriverButtonA = cntlDriver.getRawButton(RobotMap.xBoxButtonAChannel);
     b_cntlManipButtonA = cntlManipulator.getRawButton(RobotMap.xBoxButtonAChannel);
     b_cntlDriverButtonB = cntlDriver.getRawButton(RobotMap.xBoxButtonBChannel);
@@ -345,7 +397,6 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("timer", n_ledColorCode);
     SmartDashboard.putNumber("Delta Time",1/db_deltaTime);
     SmartDashboard.putNumber("Smooth Time", 1/timerSmoother.getAverage());
-    
     //db_joyDeadzone
     if (Math.abs(db_cntlDriverJoyLeftY) < (db_joyDeadzone)) {
       db_cntlDriverJoyLeftY = 0;
@@ -468,9 +519,7 @@ public class Robot extends IterativeRobot {
   } else{
     elevatorSolenoid.set(Value.kReverse);
   }
-  m_Climb.set(db_cntlManipJoyRightY *.25);
-  d_Climb.set(db_cntlManipJoyLeftY * .25);
-  drive_Climb.set(db_cntlManipJoyRightX *.25);
+
 }
 
   public void testPeriodic(){
