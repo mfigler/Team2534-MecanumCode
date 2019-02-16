@@ -59,17 +59,20 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX drive_Climb;
   // Old Robot: 0
   // New Robot: 1
-  int robotMode = 0;
+  int robotMode = 1;
 
   //Encoder testCoder;
 
   double db_joyDeadzone = 0.15;
   double db_cntlDriverJoyLeftY = 0;
   double db_cntlManipJoyLeftY = 0;
+  double db_cntlEndJoyLeftY = 0;
   double db_cntlDriverJoyLeftX = 0;
   double db_cntlDriverJoyRightX = 0;
   double db_cntlManipJoyRightX = 0;
+  double db_cntlEndJoyRightX = 0;
   double db_cntlManipJoyRightY = 0;
+  double db_cntlEndJoyRightY = 0;
   double db_cntlDriverTriggerRight = 0;
   double db_cntlManipTriggerRight = 0;
   boolean b_cntlDriverButtonA;
@@ -88,6 +91,7 @@ public class Robot extends IterativeRobot {
   //double correctSpeed = 0.2;
   XboxController cntlDriver = new XboxController(RobotMap.xBoxControllerChannel);
   XboxController cntlManipulator = new XboxController(RobotMap.xBoxManipulatorControllerChannel);
+  XboxController cntlEndGame = new XboxController(2);
   //int frames = 30;
   //double currentData;
   int n_ledColorCode = 1;
@@ -113,7 +117,15 @@ public class Robot extends IterativeRobot {
   double powerFR = 0;
   double powerFL = 0;
   double powerR = 0;
-
+  //Intake StateMachine
+  int intake_default = 0;
+  int intake_downTake = 1;
+  int intake_upShoot = 2;
+  int intake_upTake = 3;
+  int intake_downShoot = 4;
+  int intake_downShootB = 5;
+  int intake_downTakeX = 6;
+  int intakeMachine = intake_default;
   //Timers
   Timer timer = new Timer();
   Timer timerSystem = new Timer();
@@ -181,7 +193,7 @@ public class Robot extends IterativeRobot {
       RobotMap.talonRearLeftReverse = true;
     }else{
       RobotMap.talonFrontRightChannel = 2;
-      RobotMap.talonFrontRightReverse = false;
+      RobotMap.talonFrontRightReverse = true;
       RobotMap.talonRearRightChannel = 4;
       RobotMap.talonRearRightReverse = true;
       RobotMap.talonFrontLeftChannel = 1;
@@ -222,6 +234,15 @@ public class Robot extends IterativeRobot {
     endGame.climberFrontMaster = m_Climb;
     endGame.climberRear = d_Climb;
     endGame.climberDrive = drive_Climb;
+    endGame.joyRightX = db_cntlEndJoyRightX;
+    endGame.joyRightY = db_cntlEndJoyRightY;
+    endGame.joyLeftY = db_cntlEndJoyLeftY;
+    endGame.switchTopFL = limitTopFrontLeft;
+    endGame.switchTopFR = limitTopFrontRight;
+    endGame.switchTopR = limitTopRear;
+    endGame.switchBotFL = limitTopFrontLeft;
+    endGame.switchBotFR = limitTopFrontRight;
+    endGame.switchBotR = limitTopRear;
 
     endGame.init();
     //Start Compressor
@@ -269,9 +290,9 @@ public class Robot extends IterativeRobot {
     //circumfrence = Math.PI*8;
     //distance = circumfrence * rotations;
     //SmartDashboard.putNumber("Rotations", rotations);
-    SmartDashboard.putNumber("Encoder Value", encoderValue);
+    //SmartDashboard.putNumber("Encoder Value", encoderValue);
     //SmartDashboard.putNumber("Distance", distance);
-    SmartDashboard.putNumber("Voltage", voltage);
+    //SmartDashboard.putNumber("Voltage", voltage);
     if (b_cntlDriverButtonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
@@ -315,10 +336,11 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("LimelightArea", area);
     SmartDashboard.putNumber("LimelightSkew", actualSkew);
     SmartDashboard.putNumber("PressureSensPress", PSPress);
-    SmartDashboard.putBoolean("Limit", limitTopFrontRight);
-    SmartDashboard.putNumber("Amps", powerFR);
+    //SmartDashboard.putNumber("PressureSensPress", PSPress);
+    //SmartDashboard.putBoolean("Limit", limitTopFrontRight);
+    //SmartDashboard.putNumber("Amps", powerFR);
 
-
+    //Button Mapping 
     db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxdb_cntlDriverTriggerRightChannel);
     db_cntlManipTriggerRight = cntlManipulator.getRawAxis(RobotMap.xBoxdb_cntlDriverTriggerRightChannel);
     b_cntlDriverButtonA = cntlDriver.getRawButton(RobotMap.xBoxButtonAChannel);
@@ -327,24 +349,27 @@ public class Robot extends IterativeRobot {
     b_cntlManipButtonB = cntlManipulator.getRawButton(RobotMap.xBoxButtonBChannel);
     b_cntlDriverButtonX = cntlDriver.getRawButton(RobotMap.xBoxButtonXChannel);
     b_cntlManipButtonX = cntlManipulator.getRawButton(RobotMap.xBoxButtonXChannel);
+    b_cntlManipButtonY = cntlManipulator.getRawButton(RobotMap.xBoxButtonYChannel);
     b_cntlDriverButtonRight = cntlDriver.getRawButton(RobotMap.xBoxButtonRightChannel);
     b_cntlManipButtonRight = cntlManipulator.getRawButton(RobotMap.xBoxButtonRightChannel);
     b_cntlManipButtonLeft = cntlManipulator.getRawButton(RobotMap.xBoxButtonLeftChannel);
     db_cntlDriverJoyLeftY = cntlDriver.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     db_cntlManipJoyLeftY = cntlManipulator.getRawAxis(RobotMap.xBoxLeftStickYChannel);
+    db_cntlEndJoyLeftY = cntlEndGame.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     db_cntlDriverJoyLeftX = cntlDriver.getRawAxis(RobotMap.xBoxLeftStickXChannel);
     db_cntlDriverJoyRightX = cntlDriver.getRawAxis(RobotMap.xBoxRightStickXChannel);
     db_cntlManipJoyRightX = cntlManipulator.getRawAxis(RobotMap.xBoxRightStickXChannel);
+    db_cntlEndJoyRightX = cntlEndGame.getRawAxis(RobotMap.xBoxRightStickXChannel);
     db_cntlManipJoyRightY = cntlManipulator.getRawAxis(RobotMap.xBoxRightStickYChannel);
-    
+    db_cntlEndJoyRightY = cntlEndGame.getRawAxis(RobotMap.xBoxRightStickYChannel);
 
     //Read Values on Smartdashboard
-    SmartDashboard.putNumber("db_cntlDriverJoyLeftX", db_cntlDriverJoyLeftX);
-    SmartDashboard.putNumber("db_cntlDriverJoyLeftY", db_cntlDriverJoyLeftY);
-    SmartDashboard.putNumber("db_cntlDriverJoyRightX", db_cntlDriverJoyRightX);
-    SmartDashboard.putNumber("timer", n_ledColorCode);
-    SmartDashboard.putNumber("Delta Time",1/db_deltaTime);
-    SmartDashboard.putNumber("Smooth Time", 1/timerSmoother.getAverage());
+    //SmartDashboard.putNumber("db_cntlDriverJoyLeftX", db_cntlDriverJoyLeftX);
+    //SmartDashboard.putNumber("db_cntlDriverJoyLeftY", db_cntlDriverJoyLeftY);
+    //SmartDashboard.putNumber("db_cntlDriverJoyRightX", db_cntlDriverJoyRightX);
+    //SmartDashboard.putNumber("timer", n_ledColorCode);
+    //SmartDashboard.putNumber("Delta Time",1/db_deltaTime);
+    //SmartDashboard.putNumber("Smooth Time", 1/timerSmoother.getAverage());
     
     //db_joyDeadzone
     if (Math.abs(db_cntlDriverJoyLeftY) < (db_joyDeadzone)) {
@@ -358,8 +383,7 @@ public class Robot extends IterativeRobot {
     }
     
 
-    //Controlling PID Loops
-  
+    //Controlling PID Loop
     if (b_cntlDriverButtonA){
       visionLoop.enable();
       strafeLoop.enable();
@@ -407,70 +431,127 @@ public class Robot extends IterativeRobot {
       Leds.sendCode(2);
     }
 
-
-    if (b_cntlDriverButtonB){
-      Leds.sendCode(8);
-      System.out.println("B press");
-    }
-
-
+    SmartDashboard.putNumber("IntakeSM", intakeMachine);
     //Ball Intake State Machine
-    if (b_cntlManipButtonRight){
-      Leds.sendCode(10);
+    if(intakeMachine == intake_default)
+    {
+      //State = 0(default)
       hingeSolenoid.set(Value.kReverse);
-      ballIntake.set(0.7);
-      db_currentTime = timer.get();
-      if(ballIntake.getSelectedSensorPosition() >= 3 && b_ballIntake == false){
-        db_endTime = db_currentTime + 1;
-        b_ballIntake = true;
-      }
-      if (db_currentTime >= db_endTime){
-        ballIntake.set(0);
-        Leds.sendCode(2);
-        hingeSolenoid.set(Value.kReverse);
-        b_ballIntake = false;
-      }
-    } else if (b_cntlManipButtonLeft){
-      hingeSolenoid.set(Value.kForward);
-      ballIntake.set(0.5);
-    } else{
       ballIntake.set(0);
-      Leds.sendCode(2); 
+      Leds.sendCode(10);
+      if(b_cntlManipButtonX)
+      {
+        intakeMachine = intake_downTake;
+      }
+      else if(b_cntlManipButtonB)
+      {
+        intakeMachine = intake_downShoot;
+      }
+      else if(b_cntlManipButtonY)
+      {
+        intakeMachine = intake_upShoot;
+      }
+      else if(b_cntlManipButtonA)
+      {
+        intakeMachine = intake_upTake;
+      }
+    } 
+    else if(intakeMachine == intake_downTake)
+    {
+      //State = 1
       hingeSolenoid.set(Value.kForward);
-      b_ballIntake = false;
+      ballIntake.set(-0.4);
+      if(b_cntlManipButtonB)
+      {
+          intakeMachine = intake_downShootB;
+      }
+      if(!b_cntlManipButtonX)
+      {
+        intakeMachine = intake_default;
+      }
     }
-    
-    if (b_cntlManipButtonB){
+    else if(intakeMachine == intake_upShoot)
+    {
+      //State = 2
+      hingeSolenoid.set(Value.kReverse);
+      ballIntake.set(0.54);
+     
+      if(!b_cntlManipButtonY)
+      {
+        intakeMachine = intake_default;
+      }
+    }
+    else if(intakeMachine == intake_upTake)
+    {
+      //State =  3
+      hingeSolenoid.set(Value.kReverse);
+      ballIntake.set(-0.4);
+      if(!b_cntlManipButtonA)
+      {
+        intakeMachine = intake_default;
+      }
+    }
+    else if(intakeMachine == intake_downShoot)
+    {
+      //State = 4
+      hingeSolenoid.set(Value.kForward);
+      ballIntake.set(0.54);
+      if(b_cntlManipButtonX)
+      {
+        intakeMachine = intake_downTakeX;
+      }
+      if(!b_cntlManipButtonB)
+      {
+        intakeMachine = intake_default;
+      }
+    }
+    else if(intakeMachine == intake_downTakeX)
+    {
+      //State = 6
+      hingeSolenoid.set(Value.kForward);
+      ballIntake.set(-0.4);
+      if(!b_cntlManipButtonB)
+      {
+          intakeMachine = intake_downShoot;
+      }
+      if(!b_cntlManipButtonX)
+      {
+        intakeMachine = intake_downTake;
+      }
+    }
+    else if(intakeMachine == intake_downShootB)
+    {
+      //State = 5
+      hingeSolenoid.set(Value.kForward);
+      ballIntake.set(0.54);
+      if(!b_cntlManipButtonX)
+      {
+        intakeMachine = intake_downShoot;
+      }
+      if(!b_cntlManipButtonB)
+      {
+        intakeMachine = intake_downTake;
+      }
+    }
+   
+    if (db_cntlManipTriggerRight >= 0.3){
       hatchSolenoid.set(Value.kForward);
     }  else{
       hatchSolenoid.set(Value.kReverse);
     }
-  if(topLimitSwitchFrontRight.get() && powerFR > 0 ){
-    m_Climb.set(0);
-  } else if(bottomLimitSwitchFrontRight.get() && powerFR < 0){
-    m_Climb.set(0);
-  }
   
-  if(topLimitSwitchFrontLeft.get() && powerFL > 0 ){
-    m_Climb.set(0);
-  } else if(bottomLimitSwitchFrontLeft.get() && powerFL < 0){
-    m_Climb.set(0);
-  }
+
   
-  if(topLimitSwitchRear.get() && powerR > 0 ){
-    d_Climb.set(0);
-  } else if(bottomLimitSwitchRear.get() && powerR < 0){
-    d_Climb.set(0);
-  }
-  
-  if (b_cntlManipButtonX){
-    elevatorSolenoid.set(Value.kForward);
-  } else{
+  //Elevator 
+  if (b_cntlManipButtonRight){
     elevatorSolenoid.set(Value.kReverse);
+  } else{
+    elevatorSolenoid.set(Value.kForward);
   }
   m_Climb.set(db_cntlManipJoyRightY *.25);
   d_Climb.set(db_cntlManipJoyLeftY * .25);
   drive_Climb.set(db_cntlManipJoyRightX *.25);
+  //EndGame.go(b_cntlManipButtonY);
 }
 
   public void testPeriodic(){
