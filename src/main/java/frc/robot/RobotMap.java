@@ -39,12 +39,12 @@ public static int encoderAChannel = 0;
 public static int encoderBChannel = 1;
 
 //Solenoid
-public static int hingeSolenoidForwardChannel = 0;
-public static int hingeSolenoidReverseChannel = 1;
-public static int hatchSolenoidForwardChannel = 2;
-public static int hatchSolenoidReverseChannel = 3;
-public static int elevatorSolenoidForwardChannel = 4;
-public static int elevatorSolenoidReverseChannel = 5;
+public static int hingeSolenoidForwardChannel = 4;
+public static int hingeSolenoidReverseChannel = 5;
+public static int hatchSolenoidForwardChannel = 0;
+public static int hatchSolenoidReverseChannel = 1;
+public static int elevatorSolenoidForwardChannel = 2;
+public static int elevatorSolenoidReverseChannel = 3;
 
 //Ball and Elevator
 public static int talonBallIntakeChannel = 5;
