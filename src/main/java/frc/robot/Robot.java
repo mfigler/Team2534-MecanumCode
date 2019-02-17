@@ -188,6 +188,7 @@ public class Robot extends IterativeRobot {
   double actualSkew;
 
   LED Leds = new LED();
+  public boolean disableInt;
 
 
   @Override
@@ -198,9 +199,9 @@ public class Robot extends IterativeRobot {
     timerSystem.start();
     db_prevTime = timerSystem.get();
 
+    Leds.sendCode(9);
 
     //Setup Drive Train
-
     if (robotMode == 0){
       RobotMap.talonFrontRightChannel = 4;
       RobotMap.talonFrontRightReverse = false;
@@ -295,6 +296,13 @@ public class Robot extends IterativeRobot {
     sLiftLoop.setInputRange(-900000,0);
 
     }
+  
+  @Override
+  public void teleopInit()
+  {
+    Leds.sendCode(1);
+  }
+
   @Override
   public void teleopPeriodic() {
 
@@ -337,7 +345,7 @@ public class Robot extends IterativeRobot {
     //LimeLight Setpoint and else
     if(y <= -5)
     {
-      //Leds.sendCode()  
+      //Leds.sendCode(8);  //Yellow
       //Lower Hatch
       strafeLoop.setSetpoint(1.7);
       strafeLoop.setOutputRange(-1,1);
@@ -353,6 +361,7 @@ public class Robot extends IterativeRobot {
     }
     else 
     {  
+      //Leds.sendCode(5); //Purple
       //Upper Ball
       strafeLoop.setSetpoint(0.0);
       strafeLoop.setOutputRange(-1,1);
@@ -514,7 +523,7 @@ public class Robot extends IterativeRobot {
     db_cntlDriverJoyRightY = cntlDriver.getRawAxis(RobotMap.xBoxRightStickYChannel);
     b_cntlManipButtonStart = cntlDriver.getRawButton(RobotMap.xBoxButtonStartChannel);
     b_cntlDriverBackButton = cntlDriver.getRawButton(RobotMap.xBoxBackButtonChannel);
-
+    b_cntlDriverButtonY = cntlDriver.getRawButton(RobotMap.xBoxButtonYChannel);
     //Read Values on Smartdashboard
     //SmartDashboard.putNumber("db_cntlDriverJoyLeftX", db_cntlDriverJoyLeftX);
     //SmartDashboard.putNumber("db_cntlDriverJoyLeftY", db_cntlDriverJoyLeftY);
@@ -551,7 +560,7 @@ public class Robot extends IterativeRobot {
   
 
     //Checking if reflective tape area is less and change LED lights
-    if(y < 4)
+    if(y <= -5)
     {
       //Lower Hatches
       if(area >= 4.0 && x > -4 && x < 4)
@@ -560,10 +569,10 @@ public class Robot extends IterativeRobot {
       }  
       else
       {
-        Leds.sendCode(2);
+        Leds.sendCode(11);
       }
     }
-    else if(y > 4)
+    else if(y >= -3)
     {
       //Ball Hatches
       if(area >= 2.5 && x > -3.5 && x < 3.5)
@@ -572,22 +581,22 @@ public class Robot extends IterativeRobot {
       }
       else
       {
-        Leds.sendCode(2);
+        Leds.sendCode(11);
       }
     }
     else 
     {
-      Leds.sendCode(2);
+      Leds.sendCode(11);
     }
 
-    SmartDashboard.putNumber("IntakeSM", intakeMachine);
+    //SmartDashboard.putNumber("IntakeSM", intakeMachine);
     //Ball Intake State Machine
     if(intakeMachine == intake_default)
     {
       //State = 0(default)
       hingeSolenoid.set(Value.kReverse);
       ballIntake.set(0);
-      Leds.sendCode(10);
+      //Leds.sendCode(10);
       if(b_cntlManipButtonX)
       {
         intakeMachine = intake_downTake;
@@ -699,17 +708,18 @@ public class Robot extends IterativeRobot {
   }
 
   //Leds Test
-  if(b_cntlDriverBackButton)
+  if(b_cntlDriverButtonY)
   {
     Leds.sendCode(5);
   }
   endGame.go(b_cntlDriverButtonRight);
 }
 
-  public void disablePeriodic()
+  @Override
+  public void disabledInit()
   {
     Leds.sendCode(9);
-    SmartDashboard.putNumber("Im Disabled, Like You", 2);
+    //SmartDashboard.putNumber("Im Disabled, Like You", 2);
   }
 
   public void testPeriodic(){
