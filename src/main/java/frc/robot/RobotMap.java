@@ -25,6 +25,7 @@ public static int xBoxButtonAChannel = 1;
 public static int xBoxButtonBChannel = 2;
 public static int xBoxButtonXChannel = 3;
 public static int xBoxButtonYChannel = 4;
+public static int xBoxButtonStartChannel = 8;
 public static int xBoxButtonLeftChannel = 5;
 public static int xBoxButtonRightChannel = 6;
 public static int xBoxLeftStickXChannel = 0;
@@ -33,6 +34,7 @@ public static int xBoxTriggerLeftChannel = 2;
 public static int xBoxTriggerRightChannel = 3;
 public static int xBoxRightStickXChannel = 4;
 public static int xBoxRightStickYChannel = 5;
+public static int xBoxBackButtonChannel = 7;
 
 //Encoder
 public static int encoderAChannel = 0;

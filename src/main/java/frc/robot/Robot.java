@@ -53,9 +53,9 @@ public class Robot extends IterativeRobot {
   WPI_TalonSRX frontRight;
   WPI_TalonSRX rearRight;
   WPI_TalonSRX ballIntake;
-  WPI_TalonSRX m_Climb;
-  WPI_TalonSRX s_Climb;
-  WPI_TalonSRX d_Climb;
+  LimitSwitchTalon m_Climb;
+  LimitSwitchTalon s_Climb;
+  LimitSwitchTalon d_Climb;
   WPI_TalonSRX drive_Climb;
   // Old Robot: 0
   // New Robot: 1
@@ -75,7 +75,9 @@ public class Robot extends IterativeRobot {
   double db_cntlEndJoyRightY = 0;
   double db_cntlDriverTriggerRight = 0;
   double db_cntlManipTriggerRight = 0;
-  double  db_cntlManipTriggerLeft = 0;
+  double db_cntlManipTriggerLeft = 0;
+  double db_cntlDriverJoyRightY = 0;
+  double db_cntlDriverTriggerLeft = 0;
   boolean b_cntlDriverButtonA;
   boolean b_cntlManipButtonA;
   boolean b_cntlDriverButtonB;
@@ -88,6 +90,10 @@ public class Robot extends IterativeRobot {
   boolean b_cntlManipButtonRight;
   boolean b_cntlDriverButtonLeft;
   boolean b_cntlManipButtonLeft;
+  boolean b_cntlManipButtonStart;
+  boolean b_cntlDriverBackButton;
+
+
   //double target = 0.5;
   //double correctSpeed = 0.2;
   XboxController cntlDriver = new XboxController(RobotMap.xBoxControllerChannel);
@@ -112,8 +118,10 @@ public class Robot extends IterativeRobot {
   boolean limitTopRear = false;
   DigitalInput bottomLimitSwitchRear = new DigitalInput(5);
   boolean limitBottomRear = false;
-  //AnalogInput infrared = new AnalogInput(0);
-  double voltage = 0;
+  AnalogInput frontIR = new AnalogInput(2);
+  AnalogInput rearIR = new AnalogInput(3);
+  double frontVoltage = 0;
+  double rearVoltage = 0;
   double powerFR = 0;
   double powerFL = 0;
   double powerR = 0;
@@ -160,10 +168,10 @@ public class Robot extends IterativeRobot {
 
   //Set PIDs
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, outputSkew);
-  PIDController strafeLoop = new PIDController(0.1, 0.0, 0.0, limelightX, strafeOutput);
-  PIDController forwardLoop = new PIDController(0.04, 0.0, 0.0, limelightY, forwardOutput);
+  PIDController strafeLoop = new PIDController(0.08, 0.0, 0.0, limelightX, strafeOutput);
+  PIDController forwardLoop = new PIDController(0.05, 0.0, 0.0, limelightY, forwardOutput);
   PIDController encoderLoop = new PIDController(0.02, 0.0, 0.0, encoder, encoderPID);
-  PIDController mLiftLoop = new PIDController(0.02, 0.0, 0.0, mLift , mLiftPID);
+  PIDController mLiftLoop = new PIDController(0.02, 0.0, 0.02, mLift , mLiftPID);
   PIDController sLiftLoop = new PIDController(0.02, 0.0, 0.0, sLift , sLiftPID);
 
   //Global Varable for CameraValues
@@ -221,28 +229,33 @@ public class Robot extends IterativeRobot {
     rearLeft.setInverted(RobotMap.talonRearLeftReverse);
     frontRight.setInverted(RobotMap.talonFrontRightReverse);
     rearRight.setInverted(RobotMap.talonRearRightReverse);
+    frontLeft.set(0);
+    rearLeft.set(0);
+    frontRight.set(0);
+    rearRight.set(0);
     
     //Ball and Elevator
     ballIntake = new WPI_TalonSRX(RobotMap.talonBallIntakeChannel);
     
     //Endgame
-    m_Climb = new WPI_TalonSRX(RobotMap.talonClimbAChannel);
-    s_Climb = new WPI_TalonSRX(RobotMap.talonClimbBChannel);
-    d_Climb = new WPI_TalonSRX(RobotMap.talonClimbCChannel);
+    m_Climb = new LimitSwitchTalon(RobotMap.talonClimbAChannel, topLimitSwitchFrontLeft, bottomLimitSwitchFrontLeft);
+    s_Climb = new LimitSwitchTalon(RobotMap.talonClimbBChannel, bottomLimitSwitchFrontRight, topLimitSwitchFrontRight);
+    d_Climb = new LimitSwitchTalon(RobotMap.talonClimbCChannel, topLimitSwitchRear, bottomLimitSwitchRear);
     drive_Climb = new WPI_TalonSRX(RobotMap.talonClimbDriveChannel);
     s_Climb.setInverted(true);
     d_Climb.setInverted(true);
-    s_Climb.follow(m_Climb);
     
     
    robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     
     //Initialize EndGame Parameters
+   
     endGame.driveTrainFrontRight = frontRight;
     endGame.driveTrainFrontLeft = frontLeft;
     endGame.driveTrainRearRight = rearRight;
     endGame.driveTrainRearLeft = rearLeft;
     endGame.climberFrontMaster = m_Climb;
+    endGame.climberFrontSlave = s_Climb;
     endGame.climberRear = d_Climb;
     endGame.climberDrive = drive_Climb;
     endGame.joyRightX = db_cntlEndJoyRightX;
@@ -254,6 +267,10 @@ public class Robot extends IterativeRobot {
     endGame.switchBotFL = limitTopFrontLeft;
     endGame.switchBotFR = limitTopFrontRight;
     endGame.switchBotR = limitTopRear;
+    endGame.liftFrontMaster = mLiftPID;
+    endGame.liftFrontSlave = sLiftPID;
+    endGame.liftFrontMasterLoop = mLiftLoop;
+    endGame.liftFrontSlaveLoop = sLiftLoop;
 
     endGame.init();
     //Start Compressor
@@ -265,28 +282,92 @@ public class Robot extends IterativeRobot {
 
     //rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
     //Seting Camera value Ranges and Setpoints
-    strafeLoop.setSetpoint(0.0);
-    strafeLoop.setOutputRange(-1,1);
-    strafeLoop.setInputRange(-25.0, 25.0);
     
-    visionLoop.setSetpoint(0.0);
-    visionLoop.setOutputRange(-1,1);
-    visionLoop.setInputRange(-25.0, 25.0);
-    
-    forwardLoop.setSetpoint(6.0);
-    forwardLoop.setOutputRange(-1,1);
-    forwardLoop.setInputRange(-25.0, 25.0); 
 
     encoderLoop.setSetpoint(24.0); //distance
     encoderLoop.setOutputRange(-0.5,0.5); //max speed
     encoderLoop.setInputRange(-25.0, 25.0); //the minimum or maximum percentage to write to the output
 
-    mLiftLoop.setOutputRange(-0.2, 0.2);
-    mLiftLoop.setInputRange(0.0, 30000.0);
+    mLiftLoop.setOutputRange(-0.3, -0.08);
+    mLiftLoop.setInputRange(-900000,0);
+
+    sLiftLoop.setOutputRange(-0.3, -0.08);
+    sLiftLoop.setInputRange(-900000,0);
 
     }
   @Override
   public void teleopPeriodic() {
+
+    endGame.driveTrainFrontRight = frontRight;
+    endGame.driveTrainFrontLeft = frontLeft;
+    endGame.driveTrainRearRight = rearRight;
+    endGame.driveTrainRearLeft = rearLeft;
+    endGame.climberFrontMaster = m_Climb;
+    endGame.climberFrontSlave = s_Climb;
+    endGame.climberRear = d_Climb;
+    endGame.climberDrive = drive_Climb;
+    endGame.joyRightX = db_cntlEndJoyRightX;
+    endGame.joyRightY = db_cntlEndJoyRightY;
+    endGame.joyLeftY = db_cntlEndJoyLeftY;
+    endGame.switchTopFL = limitTopFrontLeft;
+    endGame.switchTopFR = limitTopFrontRight;
+    endGame.switchTopR = limitTopRear;
+    endGame.switchBotFL = limitTopFrontLeft;
+    endGame.switchBotFR = limitTopFrontRight;
+    endGame.switchBotR = limitTopRear;
+    endGame.liftFrontMaster = mLiftPID;
+    endGame.liftFrontSlave = sLiftPID;
+    endGame.liftFrontMasterLoop = mLiftLoop;
+    endGame.liftFrontSlaveLoop = sLiftLoop;
+
+    NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+    NetworkTableEntry tx = table.getEntry("tx");
+    NetworkTableEntry ty = table.getEntry("ty");
+    NetworkTableEntry ta = table.getEntry("ta");
+    NetworkTableEntry ts = table.getEntry("ts");
+
+    //read values periodically
+    double x = tx.getDouble(0.0);
+    double y = ty.getDouble(0.0);
+    double area = ta.getDouble(0.0);
+    double skew = ts.getDouble(0.0);
+    CameraValue = x;
+    ForwardValue = area;
+
+    //LimeLight Setpoint and else
+    if(y <= -5)
+    {
+      //Leds.sendCode()  
+      //Lower Hatch
+      strafeLoop.setSetpoint(1.7);
+      strafeLoop.setOutputRange(-1,1);
+      strafeLoop.setInputRange(-25.0, 25.0);
+    
+      visionLoop.setSetpoint(3.0);
+      visionLoop.setOutputRange(-1,1);
+      visionLoop.setInputRange(-25.0, 25.0);
+    
+      forwardLoop.setSetpoint(8.0);
+      forwardLoop.setOutputRange(-1,1);
+      forwardLoop.setInputRange(-25.0, 25.0);
+    }
+    else 
+    {  
+      //Upper Ball
+      strafeLoop.setSetpoint(0.0);
+      strafeLoop.setOutputRange(-1,1);
+      strafeLoop.setInputRange(-25.0, 25.0);
+    
+      visionLoop.setSetpoint(0.0);
+      visionLoop.setOutputRange(-1,1);
+      visionLoop.setInputRange(-25.0, 25.0);
+    
+      forwardLoop.setSetpoint(11);
+      forwardLoop.setOutputRange(-1,1);
+      forwardLoop.setInputRange(-25.0, 25.0);  
+    }
+
+    Leds.sendCode(2);
     // display system speed
     double db_currentTime = timerSystem.get();
     double db_deltaTime = db_currentTime - db_prevTime;
@@ -299,21 +380,44 @@ public class Robot extends IterativeRobot {
     dLiftEncoder = d_Climb.getSelectedSensorPosition(0);
 
     mLiftLoop.setSetpoint(dLiftEncoder);
+    sLiftLoop.setSetpoint(dLiftEncoder);
   
-    if (b_cntlManipButtonLeft) {
+    if (b_cntlManipButtonStart) {
       m_Climb.setSelectedSensorPosition(0);
       s_Climb.setSelectedSensorPosition(0);
       d_Climb.setSelectedSensorPosition(0);
     }
 
-    if (db_cntlManipTriggerLeft > 0.3) {
+    if (db_cntlManipTriggerLeft > 0.3 && b_cntlManipButtonLeft) {
       mLiftLoop.enable();
-      d_Climb.set(0.2);
-      m_Climb.set(mLiftPID.output);
-    } else{
+      sLiftLoop.enable();
+      if (d_Climb.getSelectedSensorPosition(0) > -852500){
+        d_Climb.set(0.3); 
+      } else{
+        d_Climb.set(0.1125);
+      }
+      m_Climb.set(-mLiftPID.output);
+      s_Climb.set(-sLiftPID.output);
+
+    } else if (db_cntlManipTriggerLeft > 0.3) {
+      d_Climb.set(0.1125);
       m_Climb.set(db_cntlManipJoyRightY *.25);
+      s_Climb.set(db_cntlManipJoyRightY *.25);
+    } else {
+      mLiftLoop.disable();
+      sLiftLoop.disable();
+      m_Climb.set(db_cntlManipJoyRightY *.25);
+      s_Climb.set(db_cntlManipJoyRightY *.25);
       d_Climb.set(db_cntlManipJoyLeftY * .25);
-      drive_Climb.set(db_cntlManipJoyRightX *.25);
+      
+    }
+
+    if(db_cntlDriverTriggerRight > 0.3){
+      drive_Climb.set(db_cntlDriverTriggerRight * 0.25);
+    } else if (db_cntlDriverTriggerLeft > 0.3){
+      drive_Climb.set(db_cntlDriverTriggerLeft * -0.25);
+    } else {
+      drive_Climb.set(0);
     }
 
     SmartDashboard.putNumber("Driver Encoder Value", dLiftEncoder);
@@ -322,10 +426,13 @@ public class Robot extends IterativeRobot {
 
 
 
-
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
-    //voltage = infrared.getAverageVoltage();
-    //irDistance = 4800/(voltage - 20);
+    frontVoltage = frontIR.getAverageVoltage();
+    SmartDashboard.putNumber("Front Voltage", frontVoltage);
+
+    rearVoltage = rearIR.getAverageVoltage();
+    SmartDashboard.putNumber("Rear Voltage", rearVoltage);
+
     encoderValue = -rearRight.getSelectedSensorPosition(0);
  
     //rotations = encoderValue/4000;
@@ -344,19 +451,7 @@ public class Robot extends IterativeRobot {
     
     // Use the joystick X axis for lateral movement, Y axis for forward
     // movement, and Z axis for rotation.
-    NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-    NetworkTableEntry tx = table.getEntry("tx");
-    NetworkTableEntry ty = table.getEntry("ty");
-    NetworkTableEntry ta = table.getEntry("ta");
-    NetworkTableEntry ts = table.getEntry("ts");
-
-    //read values periodically
-    double x = tx.getDouble(0.0);
-    double y = ty.getDouble(0.0);
-    double area = ta.getDouble(0.0);
-    double skew = ts.getDouble(0.0);
-    CameraValue = x;
-    ForwardValue = area;
+   
 
     //Pressure Sensor Voltage to Pressure converstion
     PSVolt = PressureSensor.getVoltage();
@@ -389,16 +484,14 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putBoolean("LimitBFR", limitBottomFrontRight);
     SmartDashboard.putBoolean("LimitBFL", limitBottomFrontLeft);
     SmartDashboard.putBoolean("LimitBR", limitBottomRear);
-    SmartDashboard.putNumber("Amps", powerFR);
+    //SmartDashboard.putNumber("Amps", powerFR);
+    SmartDashboard.putNumber("State", endGame.state);
 
-
+    //Button Mapping 
     db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxTriggerRightChannel);
     db_cntlManipTriggerRight = cntlManipulator.getRawAxis(RobotMap.xBoxTriggerRightChannel);
     db_cntlManipTriggerLeft = cntlManipulator.getRawAxis(RobotMap.xBoxTriggerLeftChannel);
-
-    //Button Mapping 
-    /*db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxdb_cntlDriverTriggerRightChannel);
-    db_cntlManipTriggerRight = cntlManipulator.getRawAxis(RobotMap.xBoxdb_cntlDriverTriggerRightChannel);*/
+    db_cntlDriverTriggerLeft = cntlDriver.getRawAxis(RobotMap.xBoxTriggerLeftChannel);
     b_cntlDriverButtonA = cntlDriver.getRawButton(RobotMap.xBoxButtonAChannel);
     b_cntlManipButtonA = cntlManipulator.getRawButton(RobotMap.xBoxButtonAChannel);
     b_cntlDriverButtonB = cntlDriver.getRawButton(RobotMap.xBoxButtonBChannel);
@@ -418,6 +511,9 @@ public class Robot extends IterativeRobot {
     db_cntlEndJoyRightX = cntlEndGame.getRawAxis(RobotMap.xBoxRightStickXChannel);
     db_cntlManipJoyRightY = cntlManipulator.getRawAxis(RobotMap.xBoxRightStickYChannel);
     db_cntlEndJoyRightY = cntlEndGame.getRawAxis(RobotMap.xBoxRightStickYChannel);
+    db_cntlDriverJoyRightY = cntlDriver.getRawAxis(RobotMap.xBoxRightStickYChannel);
+    b_cntlManipButtonStart = cntlDriver.getRawButton(RobotMap.xBoxButtonStartChannel);
+    b_cntlDriverBackButton = cntlDriver.getRawButton(RobotMap.xBoxBackButtonChannel);
 
     //Read Values on Smartdashboard
     //SmartDashboard.putNumber("db_cntlDriverJoyLeftX", db_cntlDriverJoyLeftX);
@@ -444,10 +540,7 @@ public class Robot extends IterativeRobot {
       visionLoop.enable();
       strafeLoop.enable();
       forwardLoop.enable();
-      robotDrive.driveCartesian(-strafeOutput.outputX, -forwardOutput.outputY, outputSkew.output, 0.0);
-    } else if (db_cntlDriverTriggerRight > 0.6){
-      encoderLoop.enable();
-      robotDrive.driveCartesian(-0.0, encoderPID.outputEncoder, 0.0, 0.0);
+      robotDrive.driveCartesian(-strafeOutput.outputX, /*-forwardOutput.outputY*/0, /*outputSkew.output*/0, 0.0);
     }else{
       visionLoop.disable();
       strafeLoop.disable();
@@ -604,7 +697,20 @@ public class Robot extends IterativeRobot {
   } else{
     elevatorSolenoid.set(Value.kForward);
   }
+
+  //Leds Test
+  if(b_cntlDriverBackButton)
+  {
+    Leds.sendCode(5);
+  }
+  endGame.go(b_cntlDriverButtonRight);
 }
+
+  public void disablePeriodic()
+  {
+    Leds.sendCode(9);
+    SmartDashboard.putNumber("Im Disabled, Like You", 2);
+  }
 
   public void testPeriodic(){
   /*

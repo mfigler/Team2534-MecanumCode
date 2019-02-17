@@ -26,6 +26,10 @@ public class EndGame {
     public boolean switchBotFR;
     public boolean switchBotFL;
     public boolean switchBotR;
+    public PIDout liftFrontMaster;
+    public PIDout liftFrontSlave;
+    public PIDController liftFrontMasterLoop;
+    public PIDController liftFrontSlaveLoop;
     protected int state = 0;
     SpeedControllerGroup driveTrain;
 
@@ -36,6 +40,7 @@ public class EndGame {
 
     public void init(){
         driveTrain = new SpeedControllerGroup(driveTrainFrontRight, driveTrainRearRight, driveTrainFrontLeft, driveTrainRearLeft);
+
     }
 
     //State 0 = idle
@@ -52,29 +57,46 @@ public class EndGame {
       if (buttonY && state == 0){
         driveTrainFrontRight.setSelectedSensorPosition(0);
         climberFrontMaster.setSelectedSensorPosition(0);
+        climberFrontSlave.setSelectedSensorPosition(0);
         climberRear.setSelectedSensorPosition(0);
         climberDrive.setSelectedSensorPosition(0);
-        state = 1;
-      } else if(buttonY && state == 1){
+        state = 2;
+      } else if(buttonY && state == 1){ //Use to back away from Hab
         driveTrain.set(-0.5);
         if (driveTrainFrontRight.getSelectedSensorPosition() <= -4000){
         state = 2;
         }
       } else if(buttonY && state == 2){
         driveTrain.set(0.0);
-        driveTrainFrontRight.setSelectedSensorPosition(0);
-        climberFrontMaster.set(0.3);
+        //driveTrainFrontRight.setSelectedSensorPosition(0);
+        liftFrontMasterLoop.setSetpoint(climberRear.getSelectedSensorPosition(0));
+        liftFrontSlaveLoop.setSetpoint(climberRear.getSelectedSensorPosition(0));
+
+        liftFrontMasterLoop.enable();
+        liftFrontSlaveLoop.enable();
+        
         climberRear.set(0.3);
-        if (climberFrontMaster.getSelectedSensorPosition() >= 1000 && climberRear.getSelectedSensorPosition() >= 1000){
-            state = 3;
+
+        climberFrontMaster.set(-liftFrontMaster.output);
+        climberFrontSlave.set(-liftFrontSlave.output);
+
+        
+      
+
+        if (climberRear.getSelectedSensorPosition(0) <= -852500){ 
+            //state = 3;
+            state = 7;
         } else if(switchTopFL && switchTopR){
-            state = 3;
+            //state = 3;
+            state = 7;
         } else if(switchTopFR && switchTopR){
-            state = 3;
+            //state = 3;
+            state = 7;
         }
       } else if(buttonY && state == 3){
-        climberFrontMaster.set(0.0);
-        climberRear.set(0.0);
+        climberFrontMaster.set(0.1125);
+        climberFrontSlave.set(0.1125);
+        climberRear.set(0.1125);
         climberDrive.set(0.5);
         if(driveTrainFrontLeft.getSelectedSensorPosition() >= 3){
             state = 4;
@@ -109,8 +131,8 @@ public class EndGame {
         state = 2000;
         }
       } else if (state == 7){
-          climberFrontMaster.set(-0.3);
-          climberRear.set(-0.3);
+          climberFrontMaster.set(0.05);
+          climberRear.set(0.05);
           if(climberFrontMaster.getSelectedSensorPosition() <= 0 && climberRear.getSelectedSensorPosition() <= 0){
               state = 0;
           }
@@ -132,9 +154,9 @@ public class EndGame {
       } else if(!buttonY && state == 6){
           state = 8;
       } else {
-          climberFrontMaster.set(joyRightY);
+          /*climberFrontMaster.set(joyRightY);
           climberFrontSlave.set(joyRightX);
-          climberRear.set(joyLeftY);
+          climberRear.set(joyLeftY);*/
       }
     } 
 }
