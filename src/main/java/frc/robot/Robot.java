@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj.SolenoidBase;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.SpeedControllerGroup;
 
 // import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 // import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
@@ -57,6 +58,7 @@ public class Robot extends IterativeRobot {
   LimitSwitchTalon s_Climb;
   LimitSwitchTalon d_Climb;
   WPI_TalonSRX drive_Climb;
+  SpeedControllerGroup driveTrain;
   // Old Robot: 0
   // New Robot: 1
   int robotMode = 1;
@@ -71,12 +73,13 @@ public class Robot extends IterativeRobot {
   double db_cntlDriverJoyRightX = 0;
   double db_cntlManipJoyRightX = 0;
   double db_cntlEndJoyRightX = 0;
+  double db_cntlDriverJoyRightY = 0;
   double db_cntlManipJoyRightY = 0;
   double db_cntlEndJoyRightY = 0;
   double db_cntlDriverTriggerRight = 0;
   double db_cntlManipTriggerRight = 0;
   double db_cntlManipTriggerLeft = 0;
-  double db_cntlDriverJoyRightY = 0;
+  double db_cntlDriverdb_cntlManipJoyRightY = 0;
   double db_cntlDriverTriggerLeft = 0;
   boolean b_cntlDriverButtonA;
   boolean b_cntlManipButtonA;
@@ -145,6 +148,7 @@ public class Robot extends IterativeRobot {
   
   //New EndGame Class
   EndGame endGame = new EndGame();
+  int endGameState = 0;
 
   //Pressure Sensor 
   AnalogInput PressureSensor = new AnalogInput(1);
@@ -192,6 +196,9 @@ public class Robot extends IterativeRobot {
 
   @Override
   public void robotInit() {
+    //Speed Controller Group
+    driveTrain = new SpeedControllerGroup(frontRight, frontLeft, rearRight, rearLeft);
+
     // Setup timers
     timer.reset();
     timerSystem.reset();
@@ -250,29 +257,31 @@ public class Robot extends IterativeRobot {
     
     //Initialize EndGame Parameters
    
-    endGame.driveTrainFrontRight = frontRight;
-    endGame.driveTrainFrontLeft = frontLeft;
-    endGame.driveTrainRearRight = rearRight;
-    endGame.driveTrainRearLeft = rearLeft;
-    endGame.climberFrontMaster = m_Climb;
-    endGame.climberFrontSlave = s_Climb;
-    endGame.climberRear = d_Climb;
-    endGame.climberDrive = drive_Climb;
-    endGame.joyRightX = db_cntlEndJoyRightX;
-    endGame.joyRightY = db_cntlEndJoyRightY;
-    endGame.joyLeftY = db_cntlEndJoyLeftY;
-    endGame.switchTopFL = limitTopFrontLeft;
-    endGame.switchTopFR = limitTopFrontRight;
-    endGame.switchTopR = limitTopRear;
-    endGame.switchBotFL = limitTopFrontLeft;
-    endGame.switchBotFR = limitTopFrontRight;
-    endGame.switchBotR = limitTopRear;
-    endGame.liftFrontMaster = mLiftPID;
-    endGame.liftFrontSlave = sLiftPID;
-    endGame.liftFrontMasterLoop = mLiftLoop;
-    endGame.liftFrontSlaveLoop = sLiftLoop;
-
+    /*
+    endGame.frontRight = frontRight;
+    endGame.frontLeft = frontLeft;
+    endGame.rearRight = rearRight;
+    endGame.rearLeft = rearLeft;
+    endGame.m_Climb = m_Climb;
+    endGame.s_Climb = s_Climb;
+    endGame.d_Climb = d_Climb;
+    endGame.drive_Climb = drive_Climb;
+    endGame.db_cntlManipJoyRightX = db_cntlManipJoyRightX;
+    endGame.db_cntlManipJoyRightY = db_cntlManipJoyRightY;
+    endGame.db_cntlManipJoyLeftY = db_cntlManipJoyLeftY;
+    endGame.limitTopFrontLeft = limitTopFrontLeft;
+    endGame.limitTopFrontRight = limitTopFrontRight;
+    endGame.limitTopRear = limitTopRear;
+    endGame.limitBottomFrontLeft = limitBottomFrontLeft;
+    endGame.limitBottomFrontRight = limitBottomFrontRight;
+    endGame.limitBottomRear = limitBottomRear;
+    endGame.mLiftPID = mLiftPID;
+    endGame.sLiftPID = sLiftPID;
+    endGame.mLiftLoop = mLiftLoop;
+    endGame.sLiftLoop = sLiftLoop;
     endGame.init();
+    */
+    
     //Start Compressor
     //compressor.start();
 
@@ -294,31 +303,32 @@ public class Robot extends IterativeRobot {
     sLiftLoop.setOutputRange(-0.3, -0.08);
     sLiftLoop.setInputRange(-900000,0);
 
-    }
+  }
   @Override
   public void teleopPeriodic() {
-
-    endGame.driveTrainFrontRight = frontRight;
-    endGame.driveTrainFrontLeft = frontLeft;
-    endGame.driveTrainRearRight = rearRight;
-    endGame.driveTrainRearLeft = rearLeft;
-    endGame.climberFrontMaster = m_Climb;
-    endGame.climberFrontSlave = s_Climb;
-    endGame.climberRear = d_Climb;
-    endGame.climberDrive = drive_Climb;
-    endGame.joyRightX = db_cntlEndJoyRightX;
-    endGame.joyRightY = db_cntlEndJoyRightY;
-    endGame.joyLeftY = db_cntlEndJoyLeftY;
-    endGame.switchTopFL = limitTopFrontLeft;
-    endGame.switchTopFR = limitTopFrontRight;
-    endGame.switchTopR = limitTopRear;
-    endGame.switchBotFL = limitTopFrontLeft;
-    endGame.switchBotFR = limitTopFrontRight;
-    endGame.switchBotR = limitTopRear;
-    endGame.liftFrontMaster = mLiftPID;
-    endGame.liftFrontSlave = sLiftPID;
-    endGame.liftFrontMasterLoop = mLiftLoop;
-    endGame.liftFrontSlaveLoop = sLiftLoop;
+    /*
+    endGame.frontRight = frontRight;
+    endGame.frontLeft = frontLeft;
+    endGame.rearRight = rearRight;
+    endGame.rearLeft = rearLeft;
+    endGame.m_Climb = m_Climb;
+    endGame.s_Climb = s_Climb;
+    endGame.d_Climb = d_Climb;
+    endGame.drive_Climb = drive_Climb;
+    endGame.db_cntlManipJoyRightX = db_cntlManipJoyRightX;
+    endGame.db_cntlManipJoyRightY = db_cntlManipJoyRightY;
+    endGame.db_cntlManipJoyLeftY = db_cntlManipJoyLeftY;
+    endGame.limitTopFrontLeft = limitTopFrontLeft;
+    endGame.limitTopFrontRight = limitTopFrontRight;
+    endGame.limitTopRear = limitTopRear;
+    endGame.limitBottomFrontLeft = limitTopFrontLeft;
+    endGame.limitBottomFrontRight = limitTopFrontRight;
+    endGame.limitBottomRear = limitTopRear;
+    endGame.mLiftPID = mLiftPID;
+    endGame.sLiftPID = sLiftPID;
+    endGame.mLiftLoop = mLiftLoop;
+    endGame.sLiftLoop = sLiftLoop;
+    */
 
     NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
     NetworkTableEntry tx = table.getEntry("tx");
@@ -485,7 +495,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putBoolean("LimitBFL", limitBottomFrontLeft);
     SmartDashboard.putBoolean("LimitBR", limitBottomRear);
     //SmartDashboard.putNumber("Amps", powerFR);
-    SmartDashboard.putNumber("State", endGame.state);
+    SmartDashboard.putNumber("endGameState", endGameState);
 
     //Button Mapping 
     db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxTriggerRightChannel);
@@ -546,7 +556,7 @@ public class Robot extends IterativeRobot {
       strafeLoop.disable();
       forwardLoop.disable();
       encoderLoop.disable();
-      robotDrive.driveCartesian(-db_cntlDriverJoyLeftX ,db_cntlDriverJoyLeftY,-db_cntlDriverJoyRightX , 0.0);
+      robotDrive.driveCartesian(-db_cntlDriverJoyLeftX ,-db_cntlDriverJoyLeftY,-db_cntlDriverJoyRightX , 0.0);
     }
   
 
@@ -703,8 +713,119 @@ public class Robot extends IterativeRobot {
   {
     Leds.sendCode(5);
   }
-  endGame.go(b_cntlDriverButtonRight);
+
+  
+  boolean buttonY = b_cntlDriverButtonRight;
+  //endgame state machine
+
+  if (buttonY && endGameState == 0){
+    frontRight.setSelectedSensorPosition(0);
+    m_Climb.setSelectedSensorPosition(0);
+    s_Climb.setSelectedSensorPosition(0);
+    d_Climb.setSelectedSensorPosition(0);
+    drive_Climb.setSelectedSensorPosition(0);
+    endGameState = 2;
+  } else if(buttonY && endGameState == 1){ //Use to back away from Hab
+    driveTrain.set(-0.5);
+    if (frontRight.getSelectedSensorPosition() <= -4000){
+    endGameState = 2;
+    }
+  } else if(buttonY && endGameState == 2){
+    driveTrain.set(0.0);
+    //frontRight.setSelectedSensorPosition(0);
+    mLiftLoop.setSetpoint(dLiftEncoder);
+    sLiftLoop.setSetpoint(dLiftEncoder);
+
+    mLiftLoop.enable();
+    sLiftLoop.enable();
+    
+    d_Climb.set(0.3);
+
+    m_Climb.set(-mLiftPID.output);
+    s_Climb.set(-sLiftPID.output);
+
+    if (d_Climb.getSelectedSensorPosition(0) <= -852500){ 
+        //endGameState = 3;
+        endGameState = 7;
+    }
+  } else if(buttonY && endGameState == 3){
+    mLiftLoop.disable();
+    sLiftLoop.disable();
+    m_Climb.set(0.1125);
+    s_Climb.set(0.1125);
+    d_Climb.set(0.1125);
+    drive_Climb.set(0.5);
+    if(frontIR.getVoltage() >= 2.4){
+        endGameState = 4;
+    }
+  } else if(buttonY && endGameState == 4){
+      sLiftLoop.setSetpoint(mLiftEncoder);
+      sLiftLoop.enable();
+      drive_Climb.set(0.0);
+      m_Climb.set(-0.3);
+      s_Climb.set(sLiftPID.output);
+      if(m_Climb.getSelectedSensorPosition() <= 0){
+          endGameState = 5;
+      }
+  } else if(buttonY && endGameState == 5){
+    sLiftLoop.disable();
+    m_Climb.set(0.0);
+    s_Climb.set(0.0);
+    m_Climb.setSelectedSensorPosition(0); 
+    driveTrain.set(0.5);
+    drive_Climb.set(0.5);
+    if(rearRight.getSelectedSensorPosition() >= 1.9){
+        endGameState = 6;
+    } 
+  } else if(buttonY && endGameState == 6){
+    driveTrain.set(0.0);
+    drive_Climb.set(0.0);
+    d_Climb.set(-0.3);
+    if (d_Climb.getSelectedSensorPosition() <= 0){
+    d_Climb.set(0.0);
+    endGameState = 2000;
+    } 
+  } else if (endGameState == 7){
+      mLiftLoop.setSetpoint(dLiftEncoder);
+      sLiftLoop.setSetpoint(dLiftEncoder);
+      mLiftLoop.enable();
+      sLiftLoop.enable();
+      m_Climb.set(mLiftPID.output);
+      s_Climb.set(sLiftPID.output);
+      d_Climb.set(0.05);
+      if(m_Climb.getSelectedSensorPosition() >= 0 && d_Climb.getSelectedSensorPosition() >= 0){
+          endGameState = 9;
+      }
+  } else if(endGameState == 8){
+      drive_Climb.set(0.0);
+      m_Climb.set(0.0);
+      d_Climb.set(0.0);
+      driveTrain.set(0.0);
+  } else if(endGameState == 9){
+      mLiftLoop.disable();
+      sLiftLoop.disable();
+      endGameState = 0; 
+  } else if(!buttonY && endGameState == 1){
+      endGameState = 0;
+  } else if(!buttonY && endGameState == 2){
+      endGameState = 7;
+  } else if(!buttonY && endGameState == 3){
+      endGameState = 8;
+  } else if(!buttonY && endGameState == 4){
+      endGameState = 8;
+  } else if(!buttonY && endGameState == 5){
+      endGameState = 8;
+  } else if(!buttonY && endGameState == 6){
+      endGameState = 8;
+  }
 }
+
+
+
+
+
+
+
 
   public void disablePeriodic()
   {
