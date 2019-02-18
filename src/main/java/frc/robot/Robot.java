@@ -136,9 +136,15 @@ public class Robot extends IterativeRobot {
   int intake_downShoot = 4;
   int intake_downShootB = 5;
   int intake_downTakeX = 6;
+  int intake_shoot = 7;
+  int intake_cargo = 8;
+  int intake_cargoShoot = 9;
+  int intake_elevatorUp = 10;
   int intakeMachine = intake_default;
   //Timers
   Timer timer = new Timer();
+  double db_shootTimer = 0.0;
+  double db_cargoTimer = 0.0;
   Timer timerSystem = new Timer();
   double db_prevTime = 0.0;
   double db_endTime = 0.0;
@@ -146,8 +152,13 @@ public class Robot extends IterativeRobot {
   SampleSmoother timerSmoother = new SampleSmoother(200);
   //double irDistance = 0;
   
-  //New EndGame Class
+  //End Game State Machine
   int endGameState = 0;
+  //End Game Climb Values
+  double liftSpeed = 0.8;
+  double frontRetractSpeed = -0.8;
+  double backRetractSpeedSlow = -0.3;
+  double backRetractSpeedFast = -0.5;
 
   //Pressure Sensor 
   AnalogInput PressureSensor = new AnalogInput(1);
@@ -297,10 +308,10 @@ public class Robot extends IterativeRobot {
     encoderLoop.setOutputRange(-0.5,0.5); //max speed
     encoderLoop.setInputRange(-25.0, 25.0); //the minimum or maximum percentage to write to the output
 
-    mLiftLoop.setOutputRange(-0.3, 0.05);
+    mLiftLoop.setOutputRange(-liftSpeed, 0.05);
     mLiftLoop.setInputRange(-900000,0);
 
-    sLiftLoop.setOutputRange(-0.3, 0.05);
+    sLiftLoop.setOutputRange(-liftSpeed, 0.05);
     sLiftLoop.setInputRange(-900000,0);
 
     }
@@ -520,6 +531,7 @@ public class Robot extends IterativeRobot {
     b_cntlDriverButtonRight = cntlDriver.getRawButton(RobotMap.xBoxButtonRightChannel);
     b_cntlManipButtonRight = cntlManipulator.getRawButton(RobotMap.xBoxButtonRightChannel);
     b_cntlManipButtonLeft = cntlManipulator.getRawButton(RobotMap.xBoxButtonLeftChannel);
+    b_cntlDriverButtonLeft = cntlDriver.getRawButton(RobotMap.xBoxButtonLeftChannel);
     db_cntlDriverJoyLeftY = cntlDriver.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     db_cntlManipJoyLeftY = cntlManipulator.getRawAxis(RobotMap.xBoxLeftStickYChannel);
     db_cntlEndJoyLeftY = cntlEndGame.getRawAxis(RobotMap.xBoxLeftStickYChannel);
@@ -605,6 +617,7 @@ public class Robot extends IterativeRobot {
       //State = 0(default)
       hingeSolenoid.set(Value.kReverse);
       ballIntake.set(0);
+      elevatorSolenoid.set(Value.kForward);
       //Leds.sendCode(10);
       if(b_cntlManipButtonX)
       {
@@ -612,6 +625,7 @@ public class Robot extends IterativeRobot {
       }
       else if(b_cntlManipButtonB)
       {
+        db_shootTimer = timerSystem.get() + 0.85;
         intakeMachine = intake_downShoot;
       }
       else if(b_cntlManipButtonY)
@@ -621,6 +635,15 @@ public class Robot extends IterativeRobot {
       else if(b_cntlManipButtonA)
       {
         intakeMachine = intake_upTake;
+      }
+      else if (b_cntlManipButtonRight && PSPress >= 40)
+      {
+        db_cargoTimer = timerSystem.get() + 1.2;
+        intakeMachine = intake_cargo;
+      }
+      else if(b_cntlManipButtonLeft)
+      {
+        intakeMachine = intake_elevatorUp;
       }
     } 
     else if(intakeMachine == intake_downTake)
@@ -662,7 +685,12 @@ public class Robot extends IterativeRobot {
     {
       //State = 4
       hingeSolenoid.set(Value.kForward);
-      ballIntake.set(0.54);
+        
+      if(db_shootTimer <= timerSystem.get())
+      {
+        intakeMachine = intake_shoot;
+      }
+    
       if(b_cntlManipButtonX)
       {
         intakeMachine = intake_downTakeX;
@@ -700,21 +728,50 @@ public class Robot extends IterativeRobot {
         intakeMachine = intake_downTake;
       }
     }
+    else if(intakeMachine == intake_shoot)
+    {
+      ballIntake.set(0.54);
+      if(b_cntlManipButtonX)
+      {
+        intakeMachine = intake_downTakeX;
+      }
+      if(!b_cntlManipButtonB)
+      {
+        intakeMachine = intake_default;
+      }
+     
+    }
+    else if (intakeMachine == intake_cargo)
+    {
+      hingeSolenoid.set(Value.kReverse);
+      elevatorSolenoid.set(Value.kReverse);
+      if(db_cargoTimer <= timerSystem.get())
+      {
+        intakeMachine = intake_cargoShoot;
+      }
+    }
+    else if(intakeMachine == intake_cargoShoot)
+    {
+      ballIntake.set(0.54);
+      if(!b_cntlManipButtonRight)
+      {
+        intakeMachine = intake_default;
+      }
+    }
+    else if(intakeMachine == intake_elevatorUp)
+    {
+      elevatorSolenoid.set(Value.kReverse);
+      if(!b_cntlManipButtonLeft)
+      {
+        intakeMachine = intake_default;
+      }
+    }
    
     if (db_cntlManipTriggerRight >= 0.3){
       hatchSolenoid.set(Value.kForward);
     }  else{
       hatchSolenoid.set(Value.kReverse);
     }
-  
-
-  
-  //Elevator 
-  if (b_cntlManipButtonRight){
-    elevatorSolenoid.set(Value.kReverse);
-  } else{
-    elevatorSolenoid.set(Value.kForward);
-  }
 
   //Leds Test
   if(b_cntlDriverButtonY)
@@ -725,7 +782,6 @@ public class Robot extends IterativeRobot {
   
   boolean buttonY = b_cntlDriverButtonRight;
   //endgame state machine
-
   if (buttonY && endGameState == 0){
     frontRight.setSelectedSensorPosition(0);
     m_Climb.setSelectedSensorPosition(0);
@@ -735,6 +791,7 @@ public class Robot extends IterativeRobot {
     endGameState = 2;
   } else if(buttonY && endGameState == 1){ //Use to back away from Hab
     //driveTrain.set(-0.5);
+    Leds.sendCode(10);
     if (frontRight.getSelectedSensorPosition() <= -4000){
     endGameState = 2;
     }
@@ -747,14 +804,18 @@ public class Robot extends IterativeRobot {
     mLiftLoop.enable();
     sLiftLoop.enable();
     
-    d_Climb.set(0.3);
+    d_Climb.set(liftSpeed);
 
     m_Climb.set(-mLiftPID.output);
     s_Climb.set(-sLiftPID.output);
-
+    if (b_cntlDriverButtonLeft){
+      if (d_Climb.getSelectedSensorPosition(0) <= -300000)
+      endGameState = 3;
+    } else{
     if (d_Climb.getSelectedSensorPosition(0) <= -882500){ 
         endGameState = 3;
     }
+  }
   } else if(buttonY && endGameState == 3){
     mLiftLoop.disable();
     sLiftLoop.disable();
@@ -769,8 +830,8 @@ public class Robot extends IterativeRobot {
   } else if(buttonY && endGameState == 4){
       d_Climb.set(0.1125);
       drive_Climb.set(0.0);
-      m_Climb.set(-0.3);
-      s_Climb.set(-0.3);
+      m_Climb.set(frontRetractSpeed);
+      s_Climb.set(frontRetractSpeed);
       if(limitBottomFrontLeft && limitBottomFrontRight){
           endGameState = 5;
       }
@@ -787,7 +848,7 @@ public class Robot extends IterativeRobot {
   } else if(buttonY && endGameState == 6){
     //driveTrain.set(0.0);
     drive_Climb.set(0.0);
-    d_Climb.set(-0.3);
+    d_Climb.set(backRetractSpeedSlow);
     if (limitBottomRear){
     d_Climb.set(0.0);
     endGameState = 2000;
