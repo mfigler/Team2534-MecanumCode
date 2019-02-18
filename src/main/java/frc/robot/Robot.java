@@ -317,13 +317,30 @@ public class Robot extends IterativeRobot {
     }
   
   @Override
-  public void teleopInit()
-  {
+  public autonomousInit(){
+    matchInit();
+  } 
+
+  @Override
+  public void teleopInit(){
+    matchInit();
+  }
+  
+  void matchInit(){
     Leds.sendCode(1);
+  }
+  
+  @Override
+  public void autonomousPeriodic(){
+    matchPeriodic();
   }
 
   @Override
   public void teleopPeriodic() {
+    matchPeriodic();
+  }
+
+  void matchPeriodic(){
     /*
     endGame.frontRight = frontRight;
     endGame.frontLeft = frontLeft;
