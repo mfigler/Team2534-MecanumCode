@@ -9,13 +9,6 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.IMotorController;
 import com.ctre.phoenix.motorcontrol.DemandType;
 import edu.wpi.first.wpilibj.*;
-//import edu.wpi.first.wpilibj.SensorBase;
-//import edu.wpi.first.wpilibj.PWM;
-//import edu.wpi.first.wpilibj.SafePWM;
-//import edu.wpi.first.wpilibj.PWMSpeedController;
-//import edu.wpi.first.wpilibj.PWMTalonSRX;
-//import edu.wpi.first.wpilibj.TalonSRX;
-//import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
@@ -31,9 +24,6 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
-
-// import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-// import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 
 import edu.wpi.cscore.*;
 import edu.wpi.cscore.CvSink;
@@ -62,8 +52,6 @@ public class Robot extends IterativeRobot {
   // Old Robot: 0
   // New Robot: 1
   int robotMode = 1;
-
-  //Encoder testCoder;
 
   double db_joyDeadzone = 0.15;
   double db_cntlDriverJoyLeftY = 0;
@@ -96,14 +84,9 @@ public class Robot extends IterativeRobot {
   boolean b_cntlManipButtonStart;
   boolean b_cntlDriverBackButton;
 
-
-  //double target = 0.5;
-  //double correctSpeed = 0.2;
   XboxController cntlDriver = new XboxController(RobotMap.xBoxControllerChannel);
   XboxController cntlManipulator = new XboxController(RobotMap.xBoxManipulatorControllerChannel);
   XboxController cntlEndGame = new XboxController(2);
-  //int frames = 30;
-  //double currentData;
   int n_ledColorCode = 1;
   DoubleSolenoid hingeSolenoid = new DoubleSolenoid(RobotMap.hingeSolenoidForwardChannel, RobotMap.hingeSolenoidReverseChannel);
   DoubleSolenoid hatchSolenoid = new DoubleSolenoid(RobotMap.hatchSolenoidForwardChannel, RobotMap.hatchSolenoidReverseChannel);
@@ -150,7 +133,6 @@ public class Robot extends IterativeRobot {
   double db_endTime = 0.0;
   boolean b_ballIntake = false;
   SampleSmoother timerSmoother = new SampleSmoother(200);
-  //double irDistance = 0;
   
   //End Game State Machine
   int endGameState = 0;
@@ -207,16 +189,12 @@ public class Robot extends IterativeRobot {
 
   @Override
   public void robotInit() {
-    //Speed Controller Group
-    //driveTrain = new SpeedControllerGroup(frontRight, frontLeft, rearRight, rearLeft);
 
     // Setup timers
     timer.reset();
     timerSystem.reset();
     timerSystem.start();
     db_prevTime = timerSystem.get();
-
-    //Leds.sendCode(9);
 
     //Setup Drive Train
     if (robotMode == 0){
@@ -266,43 +244,7 @@ public class Robot extends IterativeRobot {
     
    robotDrive = new MecanumDrive(frontLeft, rearLeft, frontRight, rearRight);
     
-    //Initialize EndGame Parameters
    
-    /*
-    endGame.frontRight = frontRight;
-    endGame.frontLeft = frontLeft;
-    endGame.rearRight = rearRight;
-    endGame.rearLeft = rearLeft;
-    endGame.m_Climb = m_Climb;
-    endGame.s_Climb = s_Climb;
-    endGame.d_Climb = d_Climb;
-    endGame.drive_Climb = drive_Climb;
-    endGame.db_cntlManipJoyRightX = db_cntlManipJoyRightX;
-    endGame.db_cntlManipJoyRightY = db_cntlManipJoyRightY;
-    endGame.db_cntlManipJoyLeftY = db_cntlManipJoyLeftY;
-    endGame.limitTopFrontLeft = limitTopFrontLeft;
-    endGame.limitTopFrontRight = limitTopFrontRight;
-    endGame.limitTopRear = limitTopRear;
-    endGame.limitBottomFrontLeft = limitBottomFrontLeft;
-    endGame.limitBottomFrontRight = limitBottomFrontRight;
-    endGame.limitBottomRear = limitBottomRear;
-    endGame.mLiftPID = mLiftPID;
-    endGame.sLiftPID = sLiftPID;
-    endGame.mLiftLoop = mLiftLoop;
-    endGame.sLiftLoop = sLiftLoop;
-    endGame.init();
-    */
-    
-    //Start Compressor
-    //compressor.start();
-
-    //Setup Encoders
-    //testCoder = new Encoder(RobotMap.encoderAChannel, RobotMap.encoderBChannel, false, Encoder.EncodingType.k4X);
-    //testCoder.setDistancePerPulse((Math.PI * 8) / 360);     
-
-    //rearRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
-    //Seting Camera value Ranges and Setpoints
-    
 
     encoderLoop.setSetpoint(24.0); //distance
     encoderLoop.setOutputRange(-0.5,0.5); //max speed
@@ -329,7 +271,7 @@ public class Robot extends IterativeRobot {
   void matchInit(){
     Leds.sendCode(1);
   }
-  
+
   @Override
   public void autonomousPeriodic(){
     matchPeriodic();
@@ -341,30 +283,7 @@ public class Robot extends IterativeRobot {
   }
 
   void matchPeriodic(){
-    /*
-    endGame.frontRight = frontRight;
-    endGame.frontLeft = frontLeft;
-    endGame.rearRight = rearRight;
-    endGame.rearLeft = rearLeft;
-    endGame.m_Climb = m_Climb;
-    endGame.s_Climb = s_Climb;
-    endGame.d_Climb = d_Climb;
-    endGame.drive_Climb = drive_Climb;
-    endGame.db_cntlManipJoyRightX = db_cntlManipJoyRightX;
-    endGame.db_cntlManipJoyRightY = db_cntlManipJoyRightY;
-    endGame.db_cntlManipJoyLeftY = db_cntlManipJoyLeftY;
-    endGame.limitTopFrontLeft = limitTopFrontLeft;
-    endGame.limitTopFrontRight = limitTopFrontRight;
-    endGame.limitTopRear = limitTopRear;
-    endGame.limitBottomFrontLeft = limitTopFrontLeft;
-    endGame.limitBottomFrontRight = limitTopFrontRight;
-    endGame.limitBottomRear = limitTopRear;
-    endGame.mLiftPID = mLiftPID;
-    endGame.sLiftPID = sLiftPID;
-    endGame.mLiftLoop = mLiftLoop;
-    endGame.sLiftLoop = sLiftLoop;
-    */
-
+    
     NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
     NetworkTableEntry tx = table.getEntry("tx");
     NetworkTableEntry ty = table.getEntry("ty");
@@ -433,30 +352,7 @@ public class Robot extends IterativeRobot {
       s_Climb.setSelectedSensorPosition(0);
       d_Climb.setSelectedSensorPosition(0);
     }
-    /*
-    if (db_cntlManipTriggerLeft > 0.3 && b_cntlManipButtonLeft) {
-      mLiftLoop.enable();
-      sLiftLoop.enable();
-      if (d_Climb.getSelectedSensorPosition(0) > -852500){
-        d_Climb.set(0.3); 
-      } else{
-        d_Climb.set(0.1125);
-      }
-      m_Climb.set(-mLiftPID.output);
-      s_Climb.set(-sLiftPID.output);
 
-    } else if (db_cntlManipTriggerLeft > 0.3) {
-      d_Climb.set(0.1125);
-      m_Climb.set(db_cntlManipJoyRightY *.25);
-      s_Climb.set(db_cntlManipJoyRightY *.25);
-    } else {
-      mLiftLoop.disable();
-      sLiftLoop.disable();
-      m_Climb.set(db_cntlManipJoyRightY *.25);
-      s_Climb.set(db_cntlManipJoyRightY *.25);
-      d_Climb.set(db_cntlManipJoyLeftY * .25);
-      
-    } */
 
     if(db_cntlDriverTriggerRight > 0.3){
       drive_Climb.set(db_cntlDriverTriggerRight * 0.25);
@@ -480,23 +376,10 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("Rear Voltage", rearVoltage);
 
     encoderValue = -rearRight.getSelectedSensorPosition(0);
- 
-    //rotations = encoderValue/4000;
-    //circumfrence = Math.PI*8;
-    //distance = circumfrence * rotations;
-    //SmartDashboard.putNumber("Rotations", rotations);
-    //SmartDashboard.putNumber("Encoder Value", encoderValue);
-    //SmartDashboard.putNumber("Distance", distance);
-    //SmartDashboard.putNumber("Voltage", voltage);
+
     if (b_cntlDriverButtonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
-
-    //SmartDashboard.putNumber("Encoder Distance:" , testCoder.getDistance());   
-    //SmartDashboard.putNumber("Encoder Value:" , testCoder.get());  
-    
-    // Use the joystick X axis for lateral movement, Y axis for forward
-    // movement, and Z axis for rotation.
    
 
     //Pressure Sensor Voltage to Pressure converstion
@@ -530,7 +413,6 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putBoolean("LimitBFR", limitBottomFrontRight);
     SmartDashboard.putBoolean("LimitBFL", limitBottomFrontLeft);
     SmartDashboard.putBoolean("LimitBR", limitBottomRear);
-    //SmartDashboard.putNumber("Amps", powerFR);
     SmartDashboard.putNumber("endGameState", endGameState);
 
     //Button Mapping 
@@ -562,14 +444,7 @@ public class Robot extends IterativeRobot {
     b_cntlManipButtonStart = cntlDriver.getRawButton(RobotMap.xBoxButtonStartChannel);
     b_cntlDriverBackButton = cntlDriver.getRawButton(RobotMap.xBoxBackButtonChannel);
     b_cntlDriverButtonY = cntlDriver.getRawButton(RobotMap.xBoxButtonYChannel);
-    //Read Values on Smartdashboard
-    //SmartDashboard.putNumber("db_cntlDriverJoyLeftX", db_cntlDriverJoyLeftX);
-    //SmartDashboard.putNumber("db_cntlDriverJoyLeftY", db_cntlDriverJoyLeftY);
-    //SmartDashboard.putNumber("db_cntlDriverJoyRightX", db_cntlDriverJoyRightX);
-    //SmartDashboard.putNumber("timer", n_ledColorCode);
-    //SmartDashboard.putNumber("Delta Time",1/db_deltaTime);
-    //SmartDashboard.putNumber("Smooth Time", 1/timerSmoother.getAverage());
-    
+
     //db_joyDeadzone
     if (Math.abs(db_cntlDriverJoyLeftY) < (db_joyDeadzone)) {
       db_cntlDriverJoyLeftY = 0;
@@ -627,7 +502,6 @@ public class Robot extends IterativeRobot {
       Leds.sendCode(11);
     }
 
-    //SmartDashboard.putNumber("IntakeSM", intakeMachine);
     //Ball Intake State Machine
     if(intakeMachine == intake_default)
     {
@@ -807,14 +681,11 @@ public class Robot extends IterativeRobot {
     drive_Climb.setSelectedSensorPosition(0);
     endGameState = 2;
   } else if(buttonY && endGameState == 1){ //Use to back away from Hab
-    //driveTrain.set(-0.5);
     Leds.sendCode(10);
     if (frontRight.getSelectedSensorPosition() <= -4000){
     endGameState = 2;
     }
   } else if(buttonY && endGameState == 2){
-    //driveTrain.set(0.0);
-    //frontRight.setSelectedSensorPosition(0);
     mLiftLoop.setSetpoint(dLiftEncoder);
     sLiftLoop.setSetpoint(dLiftEncoder);
 
@@ -857,13 +728,11 @@ public class Robot extends IterativeRobot {
     s_Climb.set(0.0);
     d_Climb.set(0.1);
     m_Climb.setSelectedSensorPosition(0); 
-    //driveTrain.set(0.5);
     drive_Climb.set(0.5);
     if(rearIR.getVoltage() >= 1.9){
         endGameState = 6;
     } 
   } else if(buttonY && endGameState == 6){
-    //driveTrain.set(0.0);
     drive_Climb.set(0.0);
     d_Climb.set(backRetractSpeedSlow);
     if (limitBottomRear){
@@ -886,7 +755,6 @@ public class Robot extends IterativeRobot {
       m_Climb.set(0.0);
       s_Climb.set(0.0);
       d_Climb.set(0.0);
-      //driveTrain.set(0.0);
   } else if(endGameState == 9){
       mLiftLoop.disable();
       sLiftLoop.disable();
@@ -914,21 +782,9 @@ public class Robot extends IterativeRobot {
   public void disabledInit()
   {
     Leds.sendCode(9);
-    //SmartDashboard.putNumber("Im Disabled, Like You", 2);
   }
 
   public void testPeriodic(){
-  /*
-  Things to do before match:
-  Proper Code On Robot
-  Ping Talons(Drive Base, Arms)
-  Limelight Sees Vision Targets
-  Vision Camera Sends Feed
-  LEDs Work
-  Compressor Runs
-  Indicator Light Works
-  Encoders Returning Values
-  Motors Run
-  Joysticks Return Value*/
+
   }
 }
