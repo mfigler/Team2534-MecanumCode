@@ -197,6 +197,7 @@ public class Robot extends IterativeRobot {
   @Override
   public void robotInit() {
 
+      Leds.sendCode(2);
     // Setup timers
     timer.reset();
     timerSystem.reset();
@@ -744,7 +745,7 @@ public class Robot extends IterativeRobot {
   } else if(buttonY && endGameState == 6){
     drive_Climb.set(0.0);
     d_Climb.set(backRetractSpeedSlow);
-    if (limitBottomRear){
+    if (limitTopRear){
       endGameState = 13;
     } 
   } else if (endGameState == 7){
@@ -784,7 +785,7 @@ public class Robot extends IterativeRobot {
     d_Climb.set(0.0);
   } else if(endGameState == 13){
     d_Climb.set(0.0);
-    robotDrive.driveCartesian(0.0, 0.25, 0.0, 0.0);
+    //robotDrive.driveCartesian(0.0, 0.25, 0.0, 0.0);
     if (!buttonY){
       endGameState = 14;
     }
@@ -803,20 +804,23 @@ public class Robot extends IterativeRobot {
       endGameState = 11;
   } else if(!buttonY && endGameState == 6){
       endGameState = 12;
-  } else if (b_cntlDriverButtonX && state == 8){
+  } else if (b_cntlDriverButtonX && endGameState == 8){
       endGameState = 0;
-  } else if (b_cntlDriverButtonX && state == 10){
+  } else if (b_cntlDriverButtonX && endGameState == 10){
     endGameState = 0;
-  } else if (b_cntlDriverButtonX && state == 11){
+  } else if (b_cntlDriverButtonX && endGameState == 11){
     endGameState = 0;
-  } else if (b_cntlDriverButtonX && state == 12){
+  } else if (b_cntlDriverButtonX && endGameState == 12){
+    endGameState = 0;
+  } else if (b_cntlDriverButtonX && endGameState == 2000){
     endGameState = 0;
   } else if (b_cntlDriverButtonA){
     visionLoop.enable();
     strafeLoop.enable();
     forwardLoop.enable();
     robotDrive.driveCartesian(strafeOutput.outputX, -forwardOutput.outputY, outputSkew.output, 0.0);
-  } else{
+  } else 
+  {
     visionLoop.disable();
     strafeLoop.disable();
     forwardLoop.disable();
