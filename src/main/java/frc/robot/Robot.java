@@ -173,8 +173,8 @@ public class Robot extends IterativeRobot {
 
   //Set PIDs
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, outputSkew);
-  PIDController strafeLoop = new PIDController(0.08, 0.0, 0.0, limelightX, strafeOutput);
-  PIDController forwardLoop = new PIDController(0.05, 0.0, 0.0, limelightY, forwardOutput);
+  PIDController strafeLoop = new PIDController(0.08, 0.0, 0.03, limelightX, strafeOutput);
+  PIDController forwardLoop = new PIDController(0.03, 0.0, 0.0, limelightY, forwardOutput);
   PIDController mLiftLoop = new PIDController(0.01, 0.0, 0.02, mLift , mLiftPID);
   PIDController sLiftLoop = new PIDController(0.01, 0.0, 0.02, sLift , sLiftPID);
 
@@ -305,15 +305,15 @@ public class Robot extends IterativeRobot {
     {
       //Leds.sendCode(8);  //Yellow
       //Lower Hatch
-      strafeLoop.setSetpoint(1.7);
+      strafeLoop.setSetpoint(0);
       strafeLoop.setOutputRange(-1,1);
       strafeLoop.setInputRange(-25.0, 25.0);
     
-      visionLoop.setSetpoint(3.0);
+      visionLoop.setSetpoint(.63);
       visionLoop.setOutputRange(-1,1);
       visionLoop.setInputRange(-25.0, 25.0);
     
-      forwardLoop.setSetpoint(8.0);
+      forwardLoop.setSetpoint(13);
       forwardLoop.setOutputRange(-1,1);
       forwardLoop.setInputRange(-25.0, 25.0);
     }
@@ -556,6 +556,7 @@ public class Robot extends IterativeRobot {
       {
         intakeMachine = intake_default;
       }
+      
     }
     else if(intakeMachine == intake_downShoot)
     {
@@ -647,7 +648,7 @@ public class Robot extends IterativeRobot {
       }
       if(b_cntlManipButtonA)
       {
-
+        intakeMachine = intake_elevatorUpTake;
       }
     }
     else if(intakeMachine == intake_elevatorUpShoot)
@@ -676,7 +677,7 @@ public class Robot extends IterativeRobot {
   //Leds Test
   if(b_cntlDriverButtonY)
   {
-    Leds.sendCode(5);
+    Leds.sendCode(2);
   }
 
   
