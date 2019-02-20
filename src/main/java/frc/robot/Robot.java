@@ -85,14 +85,14 @@ public class Robot extends IterativeRobot {
   boolean b_cntlDriverBackButton;
 
   //Value Variables
-  double ballIntakeSpeed = -0.4;
-  double ballShootSpeed = 0.4;
+  double ballIntakeSpeed = -0.3;
+  double ballShootSpeed = 0.54;
   double endGameHoldSteady = 0.1125;
   double liftSpeed = 0.8;
   double frontRetractSpeed = -0.8;
   double backRetractSpeedSlow = -0.3;
   double backRetractSpeedFast = -0.5;
-  double endGameDriveSpeed = 0.5;
+  double endGameDriveSpeed = 0.6;
   double manualEndGameDeadZone = .25;
 
   XboxController cntlDriver = new XboxController(RobotMap.xBoxControllerChannel);
@@ -131,11 +131,14 @@ public class Robot extends IterativeRobot {
   int intake_downShootB = 5;
   int intake_downTakeX = 6;
   int intake_shoot = 7;
+  int intake_shoot2 = 15;
   int intake_cargo = 8;
   int intake_cargoShoot = 9;
   int intake_elevatorUp = 10;
   int intake_elevatorUpShoot = 11;
   int intake_elevatorUpTake = 12;
+  int intake_down = 13;
+  int intake_take = 14;
   int intakeMachine = intake_default;
   //Timers
   Timer timer = new Timer();
@@ -173,7 +176,7 @@ public class Robot extends IterativeRobot {
 
   //Set PIDs
   PIDController visionLoop = new PIDController(0.03, 0.0, 0.0, limelight, outputSkew);
-  PIDController strafeLoop = new PIDController(0.08, 0.0, 0.03, limelightX, strafeOutput);
+  PIDController strafeLoop = new PIDController(0.1, 0.0, 0.03, limelightX, strafeOutput);
   PIDController forwardLoop = new PIDController(0.03, 0.0, 0.0, limelightY, forwardOutput);
   PIDController mLiftLoop = new PIDController(0.01, 0.0, 0.02, mLift , mLiftPID);
   PIDController sLiftLoop = new PIDController(0.01, 0.0, 0.02, sLift , sLiftPID);
@@ -300,6 +303,8 @@ public class Robot extends IterativeRobot {
     CameraValue = x;
     ForwardValue = area;
 
+
+
     //LimeLight Setpoint and else
     if(y <= -5)
     {
@@ -316,6 +321,14 @@ public class Robot extends IterativeRobot {
       forwardLoop.setSetpoint(13);
       forwardLoop.setOutputRange(-1,1);
       forwardLoop.setInputRange(-25.0, 25.0);
+
+    
+      if (skew > -45){
+        actualSkew = Math.abs(skew);
+      } else {
+        actualSkew = Math.abs(skew) - 90;
+      }
+      StrafeValue = actualSkew;
     }
     else 
     {  
@@ -329,9 +342,16 @@ public class Robot extends IterativeRobot {
       visionLoop.setOutputRange(-1,1);
       visionLoop.setInputRange(-25.0, 25.0);
     
-      forwardLoop.setSetpoint(11);
+      forwardLoop.setSetpoint(10);
       forwardLoop.setOutputRange(-1,1);
-      forwardLoop.setInputRange(-25.0, 25.0);  
+      forwardLoop.setInputRange(-25.0, 25.0); 
+      
+      if (skew > -45){
+        actualSkew = Math.abs(skew);
+      } else {
+        actualSkew = Math.abs(skew) - 90;
+      }
+      StrafeValue = -actualSkew;
     }
 
     Leds.sendCode(2);
@@ -386,12 +406,6 @@ public class Robot extends IterativeRobot {
     PSVolt = PressureSensor.getVoltage();
     double PSPress = ((250*(PSVolt/5)) - 25);
 
-    if (skew > -45){
-      actualSkew = Math.abs(skew);
-    } else {
-      actualSkew = Math.abs(skew) - 90;
-    }
-    StrafeValue = actualSkew;
 
     limitTopFrontRight = topLimitSwitchFrontRight.get();
     limitTopFrontLeft = topLimitSwitchFrontLeft.get();
@@ -414,6 +428,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putBoolean("LimitBFL", limitBottomFrontLeft);
     SmartDashboard.putBoolean("LimitBR", limitBottomRear);
     SmartDashboard.putNumber("endGameState", endGameState);
+    SmartDashboard.putNumber("IntakeState", intakeMachine);
 
     //Button Mapping 
     db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxTriggerRightChannel);
@@ -512,14 +527,18 @@ public class Robot extends IterativeRobot {
       {
         intakeMachine = intake_upTake;
       }
-      else if (b_cntlManipButtonRight && PSPress >= 40)
+      else if (b_cntlManipButtonRight && PSPress >= 30)
       {
-        db_cargoTimer = timerSystem.get() + 1.2;
+        db_cargoTimer = timerSystem.get() + 0.9;
         intakeMachine = intake_cargo;
       }
       else if(b_cntlManipButtonLeft)
       {
         intakeMachine = intake_elevatorUp;
+      }
+      else if(db_cntlManipTriggerLeft >= 0.3)
+      {
+        intakeMachine = intake_down;
       }
     } 
     else if(intakeMachine == intake_downTake)
@@ -665,6 +684,40 @@ public class Robot extends IterativeRobot {
       if(!b_cntlManipButtonA || !b_cntlManipButtonLeft)
       {
         intakeMachine = intake_default;
+      }
+    }
+    else if(intakeMachine == intake_down)
+    {
+      hingeSolenoid.set(Value.kForward);
+      if(db_cntlManipTriggerLeft <= 0.3)
+      {
+        intakeMachine = intake_default;
+      }
+      if(b_cntlManipButtonA)
+      {
+        intakeMachine = intake_take;
+      }
+      if(b_cntlManipButtonY)
+      {
+        intakeMachine = intake_shoot2;
+      }
+    }
+    else if(intakeMachine == intake_take)
+    {
+      ballIntake.set(ballIntakeSpeed);
+      
+      if(!b_cntlManipButtonA)
+      {
+        intakeMachine = intake_down;
+      }
+    }
+    else if(intakeMachine == intake_shoot2)
+    {
+      ballIntake.set(ballShootSpeed);
+      
+      if(!b_cntlManipButtonY)
+      {
+        intakeMachine = intake_down;
       }
     }
    
