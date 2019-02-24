@@ -85,8 +85,8 @@ public class Robot extends IterativeRobot {
   boolean b_cntlDriverBackButton;
 
   //Value Variables
-  double ballIntakeSpeed = -0.3;
-  double ballShootSpeed = 0.54;
+  double ballIntakeSpeed = 0.4;
+  double ballShootSpeed = -0.6;
   double endGameHoldSteady = 0.1125;
   double liftSpeed = 0.8;
   double frontRetractSpeed = -0.8;
@@ -645,7 +645,7 @@ public class Robot extends IterativeRobot {
     }
     else if(intakeMachine == intake_cargoShoot)
     {
-      ballIntake.set(0.6);
+      ballIntake.set(ballShootSpeed);
       if(!b_cntlManipButtonRight)
       {
         intakeMachine = intake_default;
