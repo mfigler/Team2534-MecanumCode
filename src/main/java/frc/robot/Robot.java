@@ -147,6 +147,10 @@ public class Robot extends IterativeRobot {
   double db_shootTimer = 0.0;
   double db_cargoTimer = 0.0;
   Timer timerSystem = new Timer();
+  Timer climberDriveTimer = new Timer();
+  Timer climbTimer = new Timer();
+  double timeClimberDrive = 0.0;
+  double timeClimb = 0.0;
   double db_prevTime = 0.0;
   double db_endTime = 0.0;
   boolean b_ballIntake = false;
@@ -200,13 +204,15 @@ public class Robot extends IterativeRobot {
   @Override
   public void robotInit() {
 
-      Leds.sendCode(2);
+    Leds.sendCode(2);
     // Setup timers
     timer.reset();
     timerSystem.reset();
     timerSystem.start();
     db_prevTime = timerSystem.get();
     matchTime = endGameTimer.get();
+    timeClimberDrive = climberDriveTimer.get();
+    
 
     //Setup Drive Train
     if (robotMode == 0){
@@ -272,8 +278,9 @@ public class Robot extends IterativeRobot {
     matchInit();
   }
   
+  
   void matchInit(){
-    Leds.sendCode(1);
+    //Leds.sendCode(1);
   }
 
   @Override
@@ -354,13 +361,12 @@ public class Robot extends IterativeRobot {
       StrafeValue = -actualSkew;
     }
 
-    Leds.sendCode(2);
+    //Leds.sendCode(2);
     // display system speed
     double db_currentTime = timerSystem.get();
     double db_deltaTime = db_currentTime - db_prevTime;
     db_prevTime = db_currentTime;
     timerSmoother.addSample(db_deltaTime);
-
 
     mLiftEncoder = m_Climb.getSelectedSensorPosition(0);
     sLiftEncoder = s_Climb.getSelectedSensorPosition(0);
@@ -375,7 +381,6 @@ public class Robot extends IterativeRobot {
       d_Climb.setSelectedSensorPosition(0);
     }
 
-
     if(db_cntlDriverTriggerRight > 0.3){
       drive_Climb.set(db_cntlDriverTriggerRight * 0.25);
     } else if (db_cntlDriverTriggerLeft > 0.3){
@@ -384,28 +389,17 @@ public class Robot extends IterativeRobot {
       drive_Climb.set(0);
     }
 
-    SmartDashboard.putNumber("Driver Encoder Value", dLiftEncoder);
-    SmartDashboard.putNumber("Master Encoder Value", mLiftEncoder);
-    SmartDashboard.putNumber("Slave Encoder Value", sLiftEncoder);
-
-
-
     //Gather encoder position, post to smartDashboard. Chech to see if B is pressed to reset encoder.
     frontVoltage = frontIR.getAverageVoltage();
-    SmartDashboard.putNumber("Front Voltage", frontVoltage);
-
     rearVoltage = rearIR.getAverageVoltage();
-    SmartDashboard.putNumber("Rear Voltage", rearVoltage);
 
     if (b_cntlDriverButtonX) {
         rearRight.setSelectedSensorPosition(0, 0, 0);
     }
    
-
     //Pressure Sensor Voltage to Pressure converstion
     PSVolt = PressureSensor.getVoltage();
     double PSPress = ((250*(PSVolt/5)) - 25);
-
 
     limitTopFrontRight = topLimitSwitchFrontRight.get();
     limitTopFrontLeft = topLimitSwitchFrontLeft.get();
@@ -414,7 +408,6 @@ public class Robot extends IterativeRobot {
     limitBottomFrontRight = bottomLimitSwitchFrontRight.get();
     limitBottomRear = bottomLimitSwitchRear.get();
     
-
     //post to smart dashboard periodically
     SmartDashboard.putNumber("LimelightX", x);
     SmartDashboard.putNumber("LimelightY", y);
@@ -429,6 +422,11 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putBoolean("LimitBR", limitBottomRear);
     SmartDashboard.putNumber("endGameState", endGameState);
     SmartDashboard.putNumber("IntakeState", intakeMachine);
+    SmartDashboard.putNumber("Driver Encoder Value", dLiftEncoder);
+    SmartDashboard.putNumber("Master Encoder Value", mLiftEncoder);
+    SmartDashboard.putNumber("Slave Encoder Value", sLiftEncoder);
+    SmartDashboard.putNumber("Front Voltage", frontVoltage);
+    SmartDashboard.putNumber("Rear Voltage", rearVoltage);
 
     //Button Mapping 
     db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxTriggerRightChannel);
@@ -471,7 +469,6 @@ public class Robot extends IterativeRobot {
       db_cntlDriverJoyRightX = 0;
     }
   
-
     //Checking if reflective tape area is less and change LED lights
     if(y <= -5)
     {
@@ -527,9 +524,9 @@ public class Robot extends IterativeRobot {
       {
         intakeMachine = intake_upTake;
       }
-      else if (b_cntlManipButtonRight && PSPress >= 30)
+      else if (b_cntlManipButtonRight && PSPress >= 25)
       {
-        db_cargoTimer = timerSystem.get() + 0.9;
+        db_cargoTimer = timerSystem.get() + 1;
         intakeMachine = intake_cargo;
       }
       else if(b_cntlManipButtonLeft)
@@ -648,7 +645,7 @@ public class Robot extends IterativeRobot {
     }
     else if(intakeMachine == intake_cargoShoot)
     {
-      ballIntake.set(ballShootSpeed);
+      ballIntake.set(0.6);
       if(!b_cntlManipButtonRight)
       {
         intakeMachine = intake_default;
@@ -730,7 +727,7 @@ public class Robot extends IterativeRobot {
   //Leds Test
   if(b_cntlDriverButtonY)
   {
-    Leds.sendCode(2);
+    Leds.sendCode(1);
   }
 
   
@@ -742,6 +739,8 @@ public class Robot extends IterativeRobot {
     s_Climb.setSelectedSensorPosition(0);
     d_Climb.setSelectedSensorPosition(0);
     drive_Climb.setSelectedSensorPosition(0);
+    climbTimer.reset();
+    climbTimer.start();
     endGameState = 2;
   } else if(buttonY && endGameState == 1){ //Use to back away from Hab
     Leds.sendCode(10);
@@ -754,26 +753,54 @@ public class Robot extends IterativeRobot {
 
     mLiftLoop.enable();
     sLiftLoop.enable();
+    timeClimb = climbTimer.get();
+
+    // -0.0889x^2 + 0.2667x + 0.8 (quadratic curve from 0.8 to 1.0)
+    //double db_climbSetPoint = (-0.0889*(timeClimb)*(timeClimb))+(0.2667*(timeClimb))+0.8;
+    
+    // if (timeClimb >= 1.5){
+    //   db_climbSetPoint = 1.0;
+    // }
+
+    //d_Climb.set(db_climbSetPoint);  // **REMOVE ** liftSpeed);
     
     d_Climb.set(liftSpeed);
 
     m_Climb.set(-mLiftPID.output);
     s_Climb.set(-sLiftPID.output);
+    
     if (b_cntlDriverButtonLeft){
-      if (d_Climb.getSelectedSensorPosition(0) <= -300000)
-      endGameState = 3;
-    } else{
-    if (d_Climb.getSelectedSensorPosition(0) <= -882500){ 
-      endGameState = 3;
+      if (d_Climb.getSelectedSensorPosition(0) <= -300000){
+        climbTimer.reset();
+        climbTimer.start();    
+        endGameState = 3;
+      }
     }
-  }
+    else {
+      if (d_Climb.getSelectedSensorPosition(0) <= -882500){ 
+        climbTimer.reset();
+        climbTimer.start();    
+        endGameState = 3;
+      }
+    }
   } else if(buttonY && endGameState == 3){
     mLiftLoop.disable();
     sLiftLoop.disable();
-    m_Climb.set(endGameHoldSteady);
-    s_Climb.set(endGameHoldSteady);
+    m_Climb.set(endGameHoldSteady-0.0425);
+    s_Climb.set(endGameHoldSteady-0.0425);
     d_Climb.set(endGameHoldSteady);
-    drive_Climb.set(endGameDriveSpeed);
+
+    timeClimb = climbTimer.get();
+
+    // -0.0889x^2 + 0.2667x + 0.8 (quadratic curve from 0.8 to 1.0)
+    double db_climbSetPoint = (-0.0889*(timeClimb)*(timeClimb))+(0.2667*(timeClimb))+endGameDriveSpeed;
+    
+    if (timeClimb >= 1.5){
+      db_climbSetPoint = 0.8;
+    }
+
+    drive_Climb.set(db_climbSetPoint);
+//    drive_Climb.set(endGameDriveSpeed);
     if(frontIR.getVoltage() >= 2.3){
         endGameState = 4;
       
@@ -784,21 +811,49 @@ public class Robot extends IterativeRobot {
       m_Climb.set(frontRetractSpeed);
       s_Climb.set(frontRetractSpeed);
       if(limitBottomFrontLeft && limitBottomFrontRight){
-          endGameState = 5;
+        climbTimer.reset();
+        climbTimer.start();    
+        endGameState = 5;
       }
   } else if(buttonY && endGameState == 5){
-    m_Climb.set(0.0);
-    s_Climb.set(0.0);
+    m_Climb.set(-0.05); // small abount of retract to hold against limit switches
+    s_Climb.set(-0.05);
     d_Climb.set(endGameHoldSteady);
-    m_Climb.setSelectedSensorPosition(0); 
-    drive_Climb.set(endGameDriveSpeed);
+    m_Climb.setSelectedSensorPosition(0);
+    
+    timeClimb = climbTimer.get();
+
+    // -0.0889x^2 + 0.2667x + 0.8 (quadratic curve from 0.8 to 1.0)
+    double db_climbSetPoint = (-0.0889*(timeClimb)*(timeClimb))+(0.2667*(timeClimb))+endGameDriveSpeed;
+    
+    if (timeClimb >= 1.5){
+      db_climbSetPoint = 0.8;
+    }
+    
+//    drive_Climb.set(endGameDriveSpeed);
+    drive_Climb.set(db_climbSetPoint);
     //robotDrive.driveCartesian(0.0, 0.25, 0.0, 0.0);
     if(rearIR.getVoltage() >= 1.9){
-        endGameState = 6;
+      climbTimer.reset();
+      climbTimer.start();
+      endGameState = 6;
     } 
   } else if(buttonY && endGameState == 6){
     drive_Climb.set(0.0);
-    d_Climb.set(backRetractSpeedSlow);
+
+    timeClimb = climbTimer.get();
+
+    // -0.2*cos((2*pi/3)x) + 0.8 (quadratic curve from -0.3 to -0.7)
+    //double db_climbSetPoint = 0.2*Math.cos(((2*Math.PI)/3)*timeClimb)-0.5;
+    // -0.2*cos((pi/3)x) + 0.8 (quadratic curve from -0.3 to -0.7)
+    double db_climbSetPoint = 0.2*Math.cos(((Math.PI)/3)*timeClimb)-0.5;
+
+    if (timeClimb >= 3.0){
+      db_climbSetPoint = -0.7;
+    }
+
+    d_Climb.set(db_climbSetPoint);
+    
     if (limitTopRear){
       endGameState = 13;
     } 
@@ -889,9 +944,5 @@ public class Robot extends IterativeRobot {
   public void disabledInit()
   {
     Leds.sendCode(9);
-  }
-
-  public void testPeriodic(){
-
   }
 }
