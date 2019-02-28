@@ -83,6 +83,8 @@ public class Robot extends IterativeRobot {
   boolean b_cntlManipButtonLeft;
   boolean b_cntlManipButtonStart;
   boolean b_cntlDriverBackButton;
+  boolean b_cntlManipBackButton;
+  boolean b_cntlDriverButtonStart;
 
   //Value Variables
   double ballIntakeSpeed = 0.4;
@@ -204,7 +206,7 @@ public class Robot extends IterativeRobot {
   @Override
   public void robotInit() {
 
-    Leds.sendCode(2);
+    Leds.sendCode(11); //Police
     // Setup timers
     timer.reset();
     timerSystem.reset();
@@ -213,7 +215,6 @@ public class Robot extends IterativeRobot {
     matchTime = endGameTimer.get();
     timeClimberDrive = climberDriveTimer.get();
     
-
     //Setup Drive Train
     if (robotMode == 0){
       RobotMap.talonFrontRightChannel = 4;
@@ -280,7 +281,7 @@ public class Robot extends IterativeRobot {
   
   
   void matchInit(){
-    //Leds.sendCode(1);
+    Leds.sendCode(2); //Red
   }
 
   @Override
@@ -294,6 +295,7 @@ public class Robot extends IterativeRobot {
   }
 
   void matchPeriodic(){
+    
     endGameTimer.start();
 
     NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -315,8 +317,7 @@ public class Robot extends IterativeRobot {
     //LimeLight Setpoint and else
     if(y <= -5)
     {
-      //Leds.sendCode(8);  //Yellow
-      //Lower Hatch
+        //Lower Hatch
       strafeLoop.setSetpoint(0);
       strafeLoop.setOutputRange(-1,1);
       strafeLoop.setInputRange(-25.0, 25.0);
@@ -339,8 +340,7 @@ public class Robot extends IterativeRobot {
     }
     else 
     {  
-      //Leds.sendCode(5); //Purple
-      //Upper Ball
+       //Upper Ball
       strafeLoop.setSetpoint(0.0);
       strafeLoop.setOutputRange(-1,1);
       strafeLoop.setInputRange(-25.0, 25.0);
@@ -361,7 +361,7 @@ public class Robot extends IterativeRobot {
       StrafeValue = -actualSkew;
     }
 
-    //Leds.sendCode(2);
+  
     // display system speed
     double db_currentTime = timerSystem.get();
     double db_deltaTime = db_currentTime - db_prevTime;
@@ -454,9 +454,11 @@ public class Robot extends IterativeRobot {
     db_cntlManipJoyRightY = cntlManipulator.getRawAxis(RobotMap.xBoxRightStickYChannel);
     db_cntlEndJoyRightY = cntlEndGame.getRawAxis(RobotMap.xBoxRightStickYChannel);
     db_cntlDriverJoyRightY = cntlDriver.getRawAxis(RobotMap.xBoxRightStickYChannel);
-    b_cntlManipButtonStart = cntlDriver.getRawButton(RobotMap.xBoxButtonStartChannel);
+    b_cntlDriverButtonStart = cntlDriver.getRawButton(RobotMap.xBoxButtonStartChannel);
     b_cntlDriverBackButton = cntlDriver.getRawButton(RobotMap.xBoxBackButtonChannel);
     b_cntlDriverButtonY = cntlDriver.getRawButton(RobotMap.xBoxButtonYChannel);
+    b_cntlManipButtonStart = cntlManipulator.getRawButton(RobotMap.xBoxButtonStartChannel);
+    b_cntlManipBackButton = cntlManipulator.getRawButton(RobotMap.xBoxBackButtonChannel);
 
     //db_joyDeadzone
     if (Math.abs(db_cntlDriverJoyLeftY) < (db_joyDeadzone)) {
@@ -469,35 +471,48 @@ public class Robot extends IterativeRobot {
       db_cntlDriverJoyRightX = 0;
     }
   
+    //Led Code
     //Checking if reflective tape area is less and change LED lights
     if(y <= -5)
     {
-      //Lower Hatches
+      //Lower Hatches: Signal if in dest. area
       if(area >= 4.0 && x > -4 && x < 4)
       {
-        Leds.sendCode(1);
+        Leds.sendCode(3); //Green
       }  
-      else
-      {
-        Leds.sendCode(11);
-      }
     }
     else if(y >= -3)
     {
-      //Ball Hatches
+      //Ball Hatches: Signal if in dest. area
       if(area >= 2.5 && x > -3.5 && x < 3.5)
       {
-        Leds.sendCode(1);
+        Leds.sendCode(3); //Green
       }
-      else
-      {
-        Leds.sendCode(11);
-      }
+    }
+    else if (b_cntlManipButtonStart)
+    {
+      //Hatch Signal to Human Player
+      Leds.sendCode(8); //Purple or Yellow
+    }  
+    else if (b_cntlManipBackButton)
+    {
+      //Ball Signal to Human Player
+      Leds.sendCode(4); //Orange
+    } 
+    else if(b_cntlManipButtonA)
+    {
+      Leds.sendCode(4); //Orange
+    }
+    else if(b_cntlDriverButtonRight)
+    {
+      Leds.sendCode(11); //Police
     }
     else 
     {
-      Leds.sendCode(11);
+      //Default
+      Leds.sendCode(2); //Red
     }
+   
 
     //Ball Intake State Machine
     if(intakeMachine == intake_default)
@@ -506,7 +521,7 @@ public class Robot extends IterativeRobot {
       hingeSolenoid.set(Value.kReverse);
       ballIntake.set(0);
       elevatorSolenoid.set(Value.kForward);
-      //Leds.sendCode(10);
+     
       if(b_cntlManipButtonX)
       {
         intakeMachine = intake_downTake;
@@ -526,7 +541,7 @@ public class Robot extends IterativeRobot {
       }
       else if (b_cntlManipButtonRight && PSPress >= 25)
       {
-        db_cargoTimer = timerSystem.get() + 1;
+        db_cargoTimer = timerSystem.get() + 1.3;
         intakeMachine = intake_cargo;
       }
       else if(b_cntlManipButtonLeft)
@@ -724,13 +739,7 @@ public class Robot extends IterativeRobot {
       hatchSolenoid.set(Value.kReverse);
     }
 
-  //Leds Test
-  if(b_cntlDriverButtonY)
-  {
-    Leds.sendCode(1);
-  }
-
-  
+ 
   boolean buttonY = b_cntlDriverButtonRight;
   //endgame state machine
   if (buttonY && endGameState == 0 && matchTime <= 135){
@@ -743,11 +752,11 @@ public class Robot extends IterativeRobot {
     climbTimer.start();
     endGameState = 2;
   } else if(buttonY && endGameState == 1){ //Use to back away from Hab
-    Leds.sendCode(10);
     if (frontRight.getSelectedSensorPosition() <= -4000){
     endGameState = 2;
     }
   } else if(buttonY && endGameState == 2){
+   
     mLiftLoop.setSetpoint(dLiftEncoder);
     sLiftLoop.setSetpoint(dLiftEncoder);
 
@@ -943,6 +952,6 @@ public class Robot extends IterativeRobot {
   @Override
   public void disabledInit()
   {
-    Leds.sendCode(9);
+    Leds.sendCode(9); //Rainbow
   }
 }
