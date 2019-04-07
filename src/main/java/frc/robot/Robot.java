@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
+import edu.wpi.first.wpilibj.Servo;
 
 import edu.wpi.cscore.*;
 import edu.wpi.cscore.CvSink;
@@ -104,7 +105,7 @@ public class Robot extends IterativeRobot {
   DoubleSolenoid hingeSolenoid = new DoubleSolenoid(RobotMap.hingeSolenoidForwardChannel, RobotMap.hingeSolenoidReverseChannel);
   DoubleSolenoid hatchSolenoid = new DoubleSolenoid(RobotMap.hatchSolenoidForwardChannel, RobotMap.hatchSolenoidReverseChannel);
   DoubleSolenoid elevatorSolenoid = new DoubleSolenoid(RobotMap.elevatorSolenoidForwardChannel, RobotMap.elevatorSolenoidReverseChannel);
-  Compressor compressor = new Compressor();
+  Compressor compressor = new Compressor(9);
   DigitalInput topLimitSwitchFrontRight = new DigitalInput(0);
   boolean limitTopFrontRight = false;
   DigitalInput bottomLimitSwitchFrontRight = new DigitalInput(1);
@@ -124,6 +125,8 @@ public class Robot extends IterativeRobot {
   double powerFR = 0;
   double powerFL = 0;
   double powerR = 0;
+  Servo hatchServo = new Servo(0);
+
   //Intake StateMachine
   int intake_default = 0;
   int intake_downTake = 1;
@@ -161,10 +164,10 @@ public class Robot extends IterativeRobot {
   //End Game State Machine
   int endGameState = 0;
   
-
   //Pressure Sensor 
   AnalogInput PressureSensor = new AnalogInput(1);
   double PSVolt;  
+  boolean lowPressure = false;
 
   //instantiate output of PIDout
   PIDout outputSkew = new PIDout(this); 
@@ -212,7 +215,7 @@ public class Robot extends IterativeRobot {
     timerSystem.reset();
     timerSystem.start();
     db_prevTime = timerSystem.get();
-    matchTime = endGameTimer.get();
+    matchTime = endGameTimer.get();//move to matchPeriodicz
     timeClimberDrive = climberDriveTimer.get();
     
     //Setup Drive Train
@@ -318,7 +321,7 @@ public class Robot extends IterativeRobot {
     if(y <= -5)
     {
         //Lower Hatch
-      strafeLoop.setSetpoint(0);
+      strafeLoop.setSetpoint(0.4);
       strafeLoop.setOutputRange(-1,1);
       strafeLoop.setInputRange(-25.0, 25.0);
     
@@ -349,7 +352,7 @@ public class Robot extends IterativeRobot {
       visionLoop.setOutputRange(-1,1);
       visionLoop.setInputRange(-25.0, 25.0);
     
-      forwardLoop.setSetpoint(10);
+      forwardLoop.setSetpoint(12.5);
       forwardLoop.setOutputRange(-1,1);
       forwardLoop.setInputRange(-25.0, 25.0); 
       
@@ -400,6 +403,21 @@ public class Robot extends IterativeRobot {
     //Pressure Sensor Voltage to Pressure converstion
     PSVolt = PressureSensor.getVoltage();
     double PSPress = ((250*(PSVolt/5)) - 25);
+    if(PSPress <= 40)
+    {
+      lowPressure = true;
+    }
+    else 
+    {
+      lowPressure = false;
+    }
+
+    //Emergency Compresser Disable
+    if(endGameState != 0 || b_cntlDriverButtonB){
+      compressor.setClosedLoopControl(false);
+    } else{
+      compressor.setClosedLoopControl(true);
+    }
 
     limitTopFrontRight = topLimitSwitchFrontRight.get();
     limitTopFrontLeft = topLimitSwitchFrontLeft.get();
@@ -427,6 +445,8 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("Slave Encoder Value", sLiftEncoder);
     SmartDashboard.putNumber("Front Voltage", frontVoltage);
     SmartDashboard.putNumber("Rear Voltage", rearVoltage);
+    SmartDashboard.putBoolean("Low Pressure", lowPressure);
+    SmartDashboard.putBoolean("Compressor", compressor.enabled());
 
     //Button Mapping 
     db_cntlDriverTriggerRight = cntlDriver.getRawAxis(RobotMap.xBoxTriggerRightChannel);
@@ -473,7 +493,7 @@ public class Robot extends IterativeRobot {
   
     //Led Code
     //Checking if reflective tape area is less and change LED lights
-    if(y <= -5)
+    if((y <= -5)&&(y!=0))
     {
       //Lower Hatches: Signal if in dest. area
       if(area >= 4.0 && x > -4 && x < 4)
@@ -481,7 +501,7 @@ public class Robot extends IterativeRobot {
         Leds.sendCode(3); //Green
       }  
     }
-    else if(y >= -3)
+    else if((y >= -3)&&(y!=0))
     {
       //Ball Hatches: Signal if in dest. area
       if(area >= 2.5 && x > -3.5 && x < 3.5)
@@ -497,14 +517,11 @@ public class Robot extends IterativeRobot {
     else if (b_cntlManipBackButton)
     {
       //Ball Signal to Human Player
-      Leds.sendCode(4); //Orange
+      Leds.sendCode(1); //Blue
     } 
-    else if(b_cntlManipButtonA)
-    {
-      Leds.sendCode(4); //Orange
-    }
     else if(b_cntlDriverButtonRight)
     {
+      //Climbing
       Leds.sendCode(11); //Police
     }
     else 
@@ -548,9 +565,9 @@ public class Robot extends IterativeRobot {
       {
         intakeMachine = intake_elevatorUp;
       }
-      else if(db_cntlManipTriggerLeft >= 0.3)
+      //else if(db_cntlManipTriggerLeft >= 0.3)
       {
-        intakeMachine = intake_down;
+        //intakeMachine = intake_down;
       }
     } 
     else if(intakeMachine == intake_downTake)
@@ -701,9 +718,9 @@ public class Robot extends IterativeRobot {
     else if(intakeMachine == intake_down)
     {
       hingeSolenoid.set(Value.kForward);
-      if(db_cntlManipTriggerLeft <= 0.3)
+      //if(db_cntlManipTriggerLeft <= 0.3)
       {
-        intakeMachine = intake_default;
+        //intakeMachine = intake_default;
       }
       if(b_cntlManipButtonA)
       {
@@ -739,6 +756,17 @@ public class Robot extends IterativeRobot {
       hatchSolenoid.set(Value.kReverse);
     }
 
+    //Hatch Servo
+    if(db_cntlManipTriggerLeft >= 0.3)
+    {
+      hatchServo.setAngle(85);
+    }
+    else
+    {
+      hatchServo.setAngle(0);
+    }
+
+    
  
   boolean buttonY = b_cntlDriverButtonRight;
   //endgame state machine
@@ -802,12 +830,13 @@ public class Robot extends IterativeRobot {
     timeClimb = climbTimer.get();
 
     // -0.0889x^2 + 0.2667x + 0.8 (quadratic curve from 0.8 to 1.0)
-    double db_climbSetPoint = (-0.0889*(timeClimb)*(timeClimb))+(0.2667*(timeClimb))+endGameDriveSpeed;
+    /*double db_climbSetPoint = (-0.0889*(timeClimb)*(timeClimb))+(0.2667*(timeClimb))+endGameDriveSpeed;
     
     if (timeClimb >= 1.5){
       db_climbSetPoint = 0.8;
     }
-
+    */
+    double db_climbSetPoint = 0.8;
     drive_Climb.set(db_climbSetPoint);
 //    drive_Climb.set(endGameDriveSpeed);
     if(frontIR.getVoltage() >= 2.3){
@@ -832,13 +861,13 @@ public class Robot extends IterativeRobot {
     
     timeClimb = climbTimer.get();
 
-    // -0.0889x^2 + 0.2667x + 0.8 (quadratic curve from 0.8 to 1.0)
-    double db_climbSetPoint = (-0.0889*(timeClimb)*(timeClimb))+(0.2667*(timeClimb))+endGameDriveSpeed;
+    // // -0.0889x^2 + 0.2667x + 0.8 (quadratic curve from 0.8 to 1.0)
+    // double db_climbSetPoint = (-0.0889*(timeClimb)*(timeClimb))+(0.2667*(timeClimb))+endGameDriveSpeed;
     
-    if (timeClimb >= 1.5){
-      db_climbSetPoint = 0.8;
-    }
-    
+    // if (timeClimb >= 1.5){
+    //   db_climbSetPoint = 0.8;
+    // }
+    double db_climbSetPoint = 0.8;
 //    drive_Climb.set(endGameDriveSpeed);
     drive_Climb.set(db_climbSetPoint);
     //robotDrive.driveCartesian(0.0, 0.25, 0.0, 0.0);
@@ -860,11 +889,12 @@ public class Robot extends IterativeRobot {
     if (timeClimb >= 3.0){
       db_climbSetPoint = -0.7;
     }
-
+    //robotDrive.driveCartesian(0.0, 0.1, 0.0, 0.0);  //comeback to this - end game run wheels
     d_Climb.set(db_climbSetPoint);
     
     if (limitTopRear){
       endGameState = 13;
+      //robotDrive.driveCartesian(0.0, 0.0, 0.0, 0.0);
     } 
   } else if (endGameState == 7){
       mLiftLoop.setSetpoint(dLiftEncoder);
@@ -913,7 +943,7 @@ public class Robot extends IterativeRobot {
   } else if(!buttonY && endGameState == 1){
       endGameState = 0;
   } else if(!buttonY && endGameState == 2){
-      endGameState = 7;
+      endGameState = 0;
   } else if(!buttonY && endGameState == 3){
       endGameState = 8;
   } else if(!buttonY && endGameState == 4){
@@ -922,6 +952,8 @@ public class Robot extends IterativeRobot {
       endGameState = 11;
   } else if(!buttonY && endGameState == 6){
       endGameState = 12;
+  } else if (b_cntlDriverButtonX && endGameState == 7){
+      endGameState = 0;
   } else if (b_cntlDriverButtonX && endGameState == 8){
       endGameState = 0;
   } else if (b_cntlDriverButtonX && endGameState == 10){
@@ -932,7 +964,9 @@ public class Robot extends IterativeRobot {
     endGameState = 0;
   } else if (b_cntlDriverButtonX && endGameState == 2000){
     endGameState = 0;
-  } else if (b_cntlDriverButtonA){
+  } else if (b_cntlDriverButtonX && endGameState != 0){
+    endGameState = 0;
+  }  else if (b_cntlDriverButtonA){
     visionLoop.enable();
     strafeLoop.enable();
     forwardLoop.enable();
