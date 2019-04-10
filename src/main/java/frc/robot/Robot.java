@@ -780,10 +780,17 @@ public class Robot extends IterativeRobot {
     climbTimer.start();
     endGameState = 2;
   } else if(buttonY && endGameState == 1){ //Use to back away from Hab
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
     if (frontRight.getSelectedSensorPosition() <= -4000){
     endGameState = 2;
     }
   } else if(buttonY && endGameState == 2){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
    
     mLiftLoop.setSetpoint(dLiftEncoder);
     sLiftLoop.setSetpoint(dLiftEncoder);
@@ -821,6 +828,11 @@ public class Robot extends IterativeRobot {
       }
     }
   } else if(buttonY && endGameState == 3){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
     mLiftLoop.disable();
     sLiftLoop.disable();
     m_Climb.set(endGameHoldSteady-0.0425);
@@ -844,6 +856,11 @@ public class Robot extends IterativeRobot {
       
     }
   } else if(buttonY && endGameState == 4){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
       d_Climb.set(endGameHoldSteady);
       drive_Climb.set(0.0);
       m_Climb.set(frontRetractSpeed);
@@ -854,6 +871,11 @@ public class Robot extends IterativeRobot {
         endGameState = 5;
       }
   } else if(buttonY && endGameState == 5){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
     m_Climb.set(-0.05); // small abount of retract to hold against limit switches
     s_Climb.set(-0.05);
     d_Climb.set(endGameHoldSteady);
@@ -877,6 +899,11 @@ public class Robot extends IterativeRobot {
       endGameState = 6;
     } 
   } else if(buttonY && endGameState == 6){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
     drive_Climb.set(0.0);
 
     timeClimb = climbTimer.get();
@@ -897,6 +924,11 @@ public class Robot extends IterativeRobot {
       //robotDrive.driveCartesian(0.0, 0.0, 0.0, 0.0);
     } 
   } else if (endGameState == 7){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
       mLiftLoop.setSetpoint(dLiftEncoder);
       sLiftLoop.setSetpoint(dLiftEncoder);
       mLiftLoop.enable();
@@ -908,36 +940,71 @@ public class Robot extends IterativeRobot {
           endGameState = 9;
       }
   } else if(endGameState == 8){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
       drive_Climb.set(0.0);
       m_Climb.set(endGameHoldSteady);
       s_Climb.set(endGameHoldSteady);
       d_Climb.set(endGameHoldSteady);
   } else if(endGameState == 9){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
       mLiftLoop.disable();
       sLiftLoop.disable();
       endGameState = 0; 
   } else if (endGameState == 10){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
     drive_Climb.set(0.0);
     m_Climb.set(0.0);
     s_Climb.set(0.0);
     d_Climb.set(endGameHoldSteady);
   } else if (endGameState == 11){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
     drive_Climb.set(0.0);
     m_Climb.set(0.0);
     s_Climb.set(0.0);
     d_Climb.set(endGameHoldSteady);
   } else if (endGameState == 12){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
     drive_Climb.set(0.0);
     m_Climb.set(0.0);
     s_Climb.set(0.0);
     d_Climb.set(0.0);
   } else if(endGameState == 13){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+
     d_Climb.set(0.0);
     //robotDrive.driveCartesian(0.0, 0.25, 0.0, 0.0);
     if (!buttonY){
       endGameState = 14;
     }
   } else if(endGameState == 14){
+
+    if (b_cntlDriverButtonX){
+      endGameState = 0;
+    }
+    
     robotDrive.driveCartesian(0.0, 0.0, 0.0, 0.0);
     endGameState = 2000;
   } else if(!buttonY && endGameState == 1){
